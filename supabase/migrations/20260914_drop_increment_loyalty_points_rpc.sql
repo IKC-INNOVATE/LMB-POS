@@ -1,0 +1,41 @@
+-- Migration : suppression de la fonction RPC increment_loyalty_points
+--
+-- ⚠️ MIGRATION DESTRUCTIVE — NON APPLIQUÉE.
+--    Ne PAS exécuter sans validation explicite de la Direction.
+--    Fournie « prête à l'emploi » ; la décision d'exécution est prise plus tard.
+--
+-- CONTEXTE
+-- --------
+-- `increment_loyalty_points(customer_id uuid, increment int, amount_spent numeric)`
+-- a été créée le 2026-08-21 (20260821_increment_loyalty_points.sql) puis sa
+-- permission d'exécution ajustée le 2026-09-01 (20260901_enable_rls.sql, bloc 3).
+--
+-- Cette fonction n'est appelée NULLE PART :
+--   - aucun `supabase.rpc('increment_loyalty_points', ...)` dans le code TS
+--     (grep sur *.ts / *.tsx : 0 occurrence) ;
+--   - aucune autre fonction SQL ne l'appelle (grep sur *.sql : seulement sa
+--     définition et le GRANT/REVOKE de 20260901).
+--
+-- Les points de fidélité sont désormais gérés côté service applicatif :
+--   lib/services/customers.ts -> addLoyaltyPoints / useLoyaltyPoints
+--   (UPDATE lmb_customers SET loyalty_points = ...).
+--
+-- De plus, cette fonction écrivait `loyalty_points` sans toucher `points_fidelite`
+-- (colonne dupliquée en cours de suppression — voir
+-- 20260914_drop_customers_points_fidelite.sql).
+--
+-- PRÉ-REQUIS AVANT EXÉCUTION
+-- -------------------------
+-- Confirmer une dernière fois qu'aucun client externe / edge function / cron
+-- n'invoque cette RPC :
+--   SELECT * FROM pg_stat_user_functions WHERE funcname = 'increment_loyalty_points';
+--
+-- =====================================================================
+
+DROP FUNCTION IF EXISTS public.increment_loyalty_points(uuid, int, numeric);
+
+-- =====================================================================
+-- VÉRIFICATION MANUELLE (après migration) :
+--   SELECT 1 FROM pg_proc WHERE proname = 'increment_loyalty_points';
+--   -> ne doit renvoyer aucune ligne.
+-- =====================================================================

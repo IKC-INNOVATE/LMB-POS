@@ -1,0 +1,51 @@
+-- Migration : suppression de la colonne dupliquée lmb_customers.points_fidelite
+--
+-- ⚠️ MIGRATION DESTRUCTIVE — NON APPLIQUÉE.
+--    Ne PAS exécuter sans validation explicite de la Direction.
+--    Fournie « prête à l'emploi » ; la décision d'exécution est prise plus tard.
+--
+-- CONTEXTE
+-- --------
+-- `lmb_customers` portait deux colonnes de points de fidélité :
+--   - loyalty_points  (integer NOT NULL DEFAULT 0)  -> SOURCE DE VÉRITÉ, indexée
+--     (idx_lmb_customers_loyalty_points), écrite/lue par tout le code applicatif.
+--   - points_fidelite (integer NULL DEFAULT 0)      -> miroir historique, jamais
+--     lu de façon autoritaire, maintenu de manière incohérente.
+--
+-- Audit de la base au 2026-08-29 (2 clients) :
+--   - points_fidelite non nul : 0 ligne (aucune donnée réelle dedans).
+--   - 1 client désynchronisé (loyalty_points=40 / points_fidelite=0) : aucune
+--     perte, loyalty_points porte déjà la bonne valeur.
+--
+-- Le code (lib/services/customers.ts, app/admin/customers/page.tsx, app/page.tsx,
+-- components/pos/ReceiptModal.tsx) n'écrit plus et ne lit plus points_fidelite
+-- depuis le nettoyage de la Tâche 2.4. La colonne est donc inerte.
+--
+-- PRÉ-REQUIS AVANT EXÉCUTION
+-- -------------------------
+-- 1. Confirmer qu'aucune divergence non voulue ne subsiste :
+--      SELECT id, full_name, loyalty_points, points_fidelite
+--      FROM public.lmb_customers
+--      WHERE points_fidelite IS DISTINCT FROM loyalty_points
+--        AND COALESCE(points_fidelite, 0) <> 0;
+--    -> doit renvoyer 0 ligne. Sinon, réconcilier d'abord (voir ci-dessous).
+-- 2. Le déploiement applicatif « sans points_fidelite » doit être en production.
+--
+-- RÉCONCILIATION OPTIONNELLE (si des valeurs utiles traînent dans points_fidelite)
+-- ------------------------------------------------------------------------------
+--   UPDATE public.lmb_customers
+--   SET loyalty_points = GREATEST(loyalty_points, COALESCE(points_fidelite, 0))
+--   WHERE points_fidelite IS DISTINCT FROM loyalty_points;
+--
+-- =====================================================================
+
+ALTER TABLE public.lmb_customers
+  DROP COLUMN IF EXISTS points_fidelite;
+
+-- =====================================================================
+-- VÉRIFICATION MANUELLE (après migration) :
+--   SELECT column_name FROM information_schema.columns
+--   WHERE table_schema = 'public' AND table_name = 'lmb_customers'
+--   ORDER BY ordinal_position;
+--   -> 'points_fidelite' ne doit plus apparaître.
+-- =====================================================================

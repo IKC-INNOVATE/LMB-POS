@@ -1,0 +1,59 @@
+-- Migration : suppression des tables orphelines public.sales et public.sale_items
+--
+-- ⚠️ MIGRATION DESTRUCTIVE — NON APPLIQUÉE.
+--    Ne PAS exécuter sans validation explicite de la Direction.
+--    Fournie « prête à l'emploi » ; la décision d'exécution est prise plus tard.
+--
+-- CONTEXTE
+-- --------
+-- `public.sales` est une table distincte de `public.lmb_sales` (la vraie
+-- table utilisée par toute l'application). Aucune référence à `sales` (à part
+-- `lmb_sales`, `lmb_customer_orders`) n'existe dans le code applicatif
+-- (recherche exhaustive dans app/, lib/, components/, supabase/ le
+-- 29/08/2026) : ni lecture, ni écriture, nulle part.
+--
+-- Une première tentative de suppression a échoué :
+--   ERROR: 2BP01: cannot drop table sales because other objects depend on it
+--   DETAIL: constraint sale_items_sale_id_fkey on table sale_items
+--           depends on table sales
+-- `public.sale_items` (clé étrangère sale_id -> sales.id) est elle aussi
+-- orpheline : aucune référence dans le code non plus.
+--
+-- Vérifié le 29/08/2026 (lecture seule, par l'utilisateur dans le SQL
+-- Editor Supabase) :
+--   SELECT COUNT(*) FROM public.sales;       -> 0 ligne.
+--   SELECT COUNT(*) FROM public.sale_items;  -> 0 ligne.
+--
+-- Schéma de `sales` (pour mémoire, avant suppression) :
+--   id, receipt_number, store_id, cashier_id, customer_id,
+--   subtotal_catalog_xof, discount_negotiated_xof, final_total_xof,
+--   payment_method (type énuméré personnalisé), payment_reference,
+--   has_price_override, created_at.
+--
+-- Schéma de `sale_items` (pour mémoire, avant suppression) :
+--   id, sale_id, product_id, quantity, catalog_unit_price_xof,
+--   applied_unit_price_xof, floor_unit_price_xof, line_total_xof,
+--   is_price_overridden.
+--
+-- Les deux forment vraisemblablement une ébauche de schéma antérieure à
+-- `lmb_sales`, jamais raccordée au code, jamais utilisée.
+--
+-- =====================================================================
+
+-- Ordre : la table enfant (qui porte la clé étrangère) d'abord, puis la
+-- table parente. Pas besoin de CASCADE : sale_items est supprimée
+-- explicitement avant sales.
+DROP TABLE IF EXISTS public.sale_items;
+DROP TABLE IF EXISTS public.sales;
+
+-- =====================================================================
+-- VÉRIFICATION MANUELLE (après migration) :
+--   SELECT table_name FROM information_schema.tables
+--   WHERE table_schema = 'public' AND table_name IN ('sales', 'sale_items');
+--   -> doit renvoyer 0 ligne.
+--
+-- Note : le type énuméré personnalisé utilisé par l'ancienne colonne
+-- payment_method (ex. "sales_payment_method_enum") peut rester en base
+-- sans effet une fois les tables supprimées ; il n'est pas nécessaire de
+-- le supprimer (aucune table ne l'utilise plus).
+-- =====================================================================

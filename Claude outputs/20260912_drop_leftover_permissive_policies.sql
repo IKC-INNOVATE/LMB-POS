@@ -1,0 +1,67 @@
+-- Migration : suppression de policies RLS fantômes trouvées lors de la
+-- vérification manuelle de la Tâche B.3
+--
+-- CONTEXTE
+-- --------
+-- Test réel (12/09/2026) : un compte CAISSIER (dkr@gmail.com, boutique DAKAR,
+-- rôle confirmé en base) a pu créer un transfert entre boutiques et consulter
+-- des chiffres de charges/finances qui devraient lui être interdits par
+-- 20260920_rls_policies_by_role.sql.
+--
+-- Diagnostic (requêtes exécutées dans le SQL Editor) :
+--   - Les nouvelles policies par rôle (expenses_access, transfers_access, etc.)
+--     sont bien en place.
+--   - RLS est bien activé (relrowsecurity = true) sur les tables concernées.
+--   - Le rôle de dkr@gmail.com est bien CAISSIER en base (pas une erreur de
+--     données de test).
+--   - MAIS quatre tables portent encore une ancienne policy jamais nettoyée,
+--     antérieure à 20260920 : "Allow public read/write <table>", FOR ALL,
+--     USING (true) — sur lmb_expenses, lmb_products, lmb_sales, lmb_transfers.
+--
+-- En PostgreSQL, les policies RLS sont permissives et s'additionnent en OR :
+-- il suffit qu'UNE SEULE policy autorise l'accès pour que la requête passe,
+-- peu importe combien d'autres la refusent. Cette vieille policy "true"
+-- annulait donc silencieusement la restriction par rôle sur ces 4 tables
+-- depuis la migration 20260920, sans qu'aucune erreur ne soit visible.
+--
+-- Vérifié séparément : le rôle "anon" n'a aucun GRANT sur ces 4 tables
+-- (information_schema.role_table_grants ne renvoie aucune ligne pour
+-- anon/public) — donc ce trou n'était exploitable qu'entre comptes internes
+-- authentifiés (ex. CAISSIER accédant à des données GERANT/DIRECTION), pas
+-- depuis l'extérieur sans compte.
+--
+-- Idempotente.
+-- =====================================================================
+
+DROP POLICY IF EXISTS "Allow public read/write lmb_expenses" ON public.lmb_expenses;
+DROP POLICY IF EXISTS "Allow public read/write lmb_products" ON public.lmb_products;
+DROP POLICY IF EXISTS "Allow public read/write lmb_sales" ON public.lmb_sales;
+DROP POLICY IF EXISTS "Allow public read/write lmb_transfers" ON public.lmb_transfers;
+
+-- =====================================================================
+-- VÉRIFICATION MANUELLE (après migration) :
+--
+--   -- Doit renvoyer 0 ligne :
+--   SELECT tablename, policyname FROM pg_policies
+--   WHERE schemaname = 'public'
+--     AND policyname ILIKE '%public%'
+--     AND tablename IN ('lmb_expenses', 'lmb_products', 'lmb_sales', 'lmb_transfers');
+--
+--   -- Par précaution, vérifier aussi qu'aucune autre table de l'application
+--   -- n'a le même genre de policy fantôme oubliée ailleurs (devrait déjà
+--   -- renvoyer 0 ligne d'après le diagnostic du 12/09/2026, mais à re-vérifier
+--   -- après cette migration) :
+--   SELECT tablename, policyname, cmd, qual FROM pg_policies
+--   WHERE schemaname = 'public' AND policyname ILIKE '%public%';
+--
+--   -- Puis rejouer le test réel en conditions réelles avec dkr@gmail.com
+--   -- (CAISSIER) :
+--   --   1. Tentative de créer un transfert entre boutiques (/admin, onglet
+--   --      Stocks/Transferts) -> doit échouer silencieusement (aucune ligne
+--   --      insérée) ou renvoyer une erreur RLS.
+--   --   2. Onglet Charges & Bilan Financier -> les chiffres réels ne doivent
+--   --      plus s'afficher (page peut rester visible tant que la Phase C
+--   --      n'est pas faite, mais les DONNÉES doivent être vides/bloquées).
+--   --   3. Revente en caisse (déjà testée OK) -> doit continuer de fonctionner
+--   --      normalement (sales_insert autorise CAISSIER sur sa propre boutique).
+-- =====================================================================

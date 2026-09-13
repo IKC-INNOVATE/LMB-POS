@@ -1,0 +1,19 @@
+{
+  "name": "Luxury Magic Butter - Logiciel de Caisse & ERP",
+  "short_name": "LMB Caisse",
+  "description": "Système d'encaissement et de gestion de stock Luxury Magic Butter pour Ordinateur et Tablettes",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#070B14",
+  "theme_color": "#0D1527",
+  "orientation": "any",
+  "categories": ["business", "productivity", "shopping"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

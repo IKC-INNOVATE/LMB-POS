@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f9f9fb;
+  --foreground: #111111;
+  --muted: #5c5a55;
+  --card: #ffffff;
+  --card-alt: #f3f4f6;
+  --gold: #d4af37;
+  --gold-strong: #c5a059;
+  --dark: #111111;
+  --dark-soft: #1a1a1a;
+  --line: rgba(17, 17, 17, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "SFMono-Regular", "Consolas", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(212, 175, 55, 0.12), transparent 28%),
+    linear-gradient(180deg, #f9f9fb 0%, #f3f4f6 100%);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.28);
+  color: #111111;
+}
+
+@layer utilities {
+  .shadow-luxury {
+    box-shadow: 0 18px 40px -22px rgba(212, 175, 55, 0.45);
+  }
+
+  .border-luxury {
+    border-color: rgba(212, 175, 55, 0.45);
+  }
+
+  .bg-luxury-panel {
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(243,244,246,0.96));
+  }
+}
+
+/* ===== Bouton clair/sombre : bascule globale des couleurs =====
+   Ce bloc réutilise directement les couleurs déjà présentes dans toute
+   l'application plutôt que de modifier chaque écran un par un. Quand le
+   mode clair est actif (classe "light" posée sur <html> par le bouton en
+   haut à droite), ces variables et classes changent de valeur, ce qui
+   éclaircit automatiquement tous les écrans qui les utilisent. */
+html.light {
+  /* Décalées d'un cran par rapport à une simple inversion, pour que les
+     cartes/panneaux restent visiblement distincts du fond de page (au lieu
+     de faire du blanc sur blanc), et que les bordures restent visibles. */
+  --color-slate-950: oklch(96.8% 0.007 247.896);
+  --color-slate-900: oklch(92.9% 0.013 255.508);
+  --color-slate-800: oklch(86.9% 0.022 252.894);
+  --color-slate-700: oklch(70.4% 0.04 256.788);
+  --color-slate-600: oklch(55.4% 0.046 257.417);
+  --color-slate-400: oklch(44.6% 0.043 257.281);
+  --color-slate-300: oklch(37.2% 0.044 257.287);
+  --color-slate-200: oklch(27.9% 0.041 260.031);
+  --color-slate-100: oklch(20.8% 0.042 265.755);
+  --color-slate-50: oklch(12.9% 0.042 264.695);
+
+  --color-gray-800: oklch(86.9% 0.022 252.894);
+  --color-gray-700: oklch(70.4% 0.04 256.788);
+  --color-gray-200: oklch(27.8% 0.033 256.848);
+}
+
+html.light .text-white {
+  color: #171717;
+}
+
+/* Corrige le vrai bug de lisibilité repéré par l'utilisateur : partout dans
+   l'application, les badges/étiquettes utilisent un texte de couleur pâle
+   (ex. amber-200, emerald-300...) sur un fond très légèrement teinté de la
+   même couleur — un style pensé pour un fond sombre. Sur fond clair, ce
+   texte pâle devient illisible sur un fond presque blanc. On assombrit donc
+   ces teintes de texte spécifiquement en mode clair (le fond du badge, lui,
+   reste inchangé et continue à bien fonctionner). */
+html.light {
+  --color-amber-100: oklch(47.3% 0.137 46.201);
+  --color-amber-200: oklch(47.3% 0.137 46.201);
+  --color-amber-300: oklch(47.3% 0.137 46.201);
+  --color-emerald-100: oklch(43.2% 0.095 166.913);
+  --color-emerald-200: oklch(43.2% 0.095 166.913);
+  --color-emerald-300: oklch(43.2% 0.095 166.913);
+  --color-rose-100: oklch(45.5% 0.188 13.697);
+  --color-rose-200: oklch(45.5% 0.188 13.697);
+  --color-rose-300: oklch(45.5% 0.188 13.697);
+  --color-cyan-100: oklch(45% 0.085 224.283);
+  --color-cyan-200: oklch(45% 0.085 224.283);
+  --color-cyan-300: oklch(45% 0.085 224.283);
+  --color-teal-100: oklch(43.7% 0.078 188.216);
+  --color-teal-200: oklch(43.7% 0.078 188.216);
+  --color-teal-300: oklch(43.7% 0.078 188.216);
+  --color-violet-100: oklch(43.2% 0.232 292.759);
+  --color-violet-200: oklch(43.2% 0.232 292.759);
+  --color-violet-300: oklch(43.2% 0.232 292.759);
+  --color-red-100: oklch(44.4% 0.177 26.899);
+  --color-red-200: oklch(44.4% 0.177 26.899);
+  --color-red-300: oklch(44.4% 0.177 26.899);
+  --color-orange-100: oklch(47% 0.157 37.304);
+  --color-orange-200: oklch(47% 0.157 37.304);
+  --color-orange-300: oklch(47% 0.157 37.304);
+}
+
+/* Même problème pour deux teintes "or" écrites en dur, utilisées pour les
+   étiquettes clients VIP et le texte du panier (pâles sur fond sombre,
+   illisibles sur fond clair une fois le panneau éclairci). */
+html.light .text-\[\#F5E3B3\] {
+  color: #8a6a1a;
+}
+
+/* Couleurs écrites en dur (hors palette Tailwind), utilisées notamment
+   dans l'en-tête de la Caisse, le menu admin et quelques tableaux. Valeurs
+   définitives fixées plus bas (section "mieux distinguer les panneaux"). */
+html.light .bg-\[\#111111\]\/60 { background-color: color-mix(in oklab, #FFFFFF 60%, transparent); }
+html.light .bg-\[\#111111\]\/80 { background-color: color-mix(in oklab, #FFFFFF 80%, transparent); }
+html.light .bg-\[\#111111\]\/95 { background-color: color-mix(in oklab, #FFFFFF 95%, transparent); }
+html.light .bg-\[\#222222\] { background-color: #E7E7E7; }
+html.light .hover\:bg-\[\#222222\]:hover { background-color: #E7E7E7; }
+
+html.light .text-\[\#F9F9FB\] { color: #171717; }
+html.light .text-\[\#D7D7D7\] { color: #444444; }
+html.light .text-\[\#E4E4E4\] { color: #333333; }
+html.light .text-\[\#CFCFCF\] { color: #444444; }
+html.light .text-\[\#9aa0a6\] { color: #5c5a55; }
+html.light .text-\[\#9a9a9a\] { color: #5c5a55; }
+
+/* ===== Lisibilité : légère augmentation de la taille des textes =====
+   Beaucoup d'étiquettes/textes secondaires dans l'application utilisent des
+   tailles très petites (9 à 12px). On les agrandit légèrement, partout
+   (thème clair et sombre), pour améliorer la lecture sans bouleverser la
+   mise en page. */
+.text-\[9px\] { font-size: 10px; }
+.text-\[10px\] { font-size: 11px; }
+.text-\[11px\] { font-size: 12px; }
+.text-\[12px\] { font-size: 13px; }
+
+:root {
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+}
+
+/* ===== Retouche : mieux distinguer les panneaux du fond de page en mode
+   clair (Client / Panier / Total se confondaient avec le fond). ===== */
+html.light .bg-\[\#F9F9FB\] {
+  background-color: #F0F1F4;
+}
+html.light .bg-\[\#0A0F1D\] {
+  background-color: #F0F1F4;
+}
+html.light .bg-\[\#111111\] {
+  background-color: #FFFFFF;
+}
+html.light .bg-\[\#1A1A1A\] {
+  background-color: #FFFFFF;
+}
