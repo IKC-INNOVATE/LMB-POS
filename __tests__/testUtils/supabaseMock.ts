@@ -10,7 +10,13 @@ import { vi } from 'vitest';
  * comme une Promise quand on l'attend directement (sans `.single()`), tout
  * comme le vrai client supabase-js.
  */
-export function queueSupabaseFrom(results: Array<{ data: any; error: any }>) {
+type SupabaseResult = { data: unknown; error: unknown };
+
+interface MockBuilder {
+  [method: string]: (...args: unknown[]) => unknown;
+}
+
+export function queueSupabaseFrom(results: Array<SupabaseResult>) {
   let i = 0;
   const from = vi.fn(() => {
     const result = results[i] ?? { data: null, error: null };
@@ -20,8 +26,8 @@ export function queueSupabaseFrom(results: Array<{ data: any; error: any }>) {
   return from;
 }
 
-function makeBuilder(result: { data: any; error: any }) {
-  const builder: any = {};
+function makeBuilder(result: SupabaseResult): MockBuilder {
+  const builder: MockBuilder = {};
   const chainMethods = [
     'select', 'eq', 'order', 'limit', 'gte', 'lte', 'or', 'insert', 'update', 'delete',
   ];
@@ -32,11 +38,17 @@ function makeBuilder(result: { data: any; error: any }) {
   builder.maybeSingle = vi.fn(() => Promise.resolve(result));
   // Rend le builder "thenable" : `await supabase.from(...).select(...).eq(...)`
   // (sans `.single()`) résout directement, comme le vrai client.
-  builder.then = (resolve: any, reject: any) => Promise.resolve(result).then(resolve, reject);
+  builder.then = (...args: unknown[]) => {
+    const [resolve, reject] = args as [
+      (value: SupabaseResult) => void,
+      ((reason?: unknown) => void)?,
+    ];
+    return Promise.resolve(result).then(resolve, reject);
+  };
   return builder;
 }
 
-export function makeRpcMock(results: Array<{ data: any; error: any }>) {
+export function makeRpcMock(results: Array<SupabaseResult>) {
   let i = 0;
   return vi.fn(() => {
     const result = results[i] ?? { data: null, error: null };

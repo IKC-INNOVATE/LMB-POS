@@ -389,7 +389,7 @@ function CreateSection({ onCreated }: { onCreated: () => void }) {
 // ============================================================================
 
 function usePeriod() {
-  const initial = useMemo(defaultRange, []);
+  const initial = useMemo(() => defaultRange(), []);
   const [startInput, setStartInput] = useState(initial.start);
   const [endInput, setEndInput] = useState(initial.end);
   const [range, setRange] = useState(initial);
@@ -475,7 +475,6 @@ function AttendanceSection() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.startISO, p.endISO, storeFilter, nameFilter]);
 
   return (
@@ -490,7 +489,7 @@ function AttendanceSection() {
       <div className="mb-4 flex flex-wrap gap-3">
         <label className="text-xs">
           <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Boutique</span>
-          <Select value={storeFilter} onChange={(e) => setStoreFilter(e.target.value as any)} className="w-44">
+          <Select value={storeFilter} onChange={(e) => setStoreFilter(e.target.value as '' | 'DAKAR' | 'ABIDJAN')} className="w-44">
             <option value="">Toutes</option>
             <option value="DAKAR">Dakar</option>
             <option value="ABIDJAN">Abidjan</option>

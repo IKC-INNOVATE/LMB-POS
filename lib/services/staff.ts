@@ -60,7 +60,7 @@ export async function createStaffAccount(input: CreateStaffInput): Promise<Staff
     body: JSON.stringify(input),
   });
 
-  let payload: any = null;
+  let payload: { error?: string; staff?: StaffProfile } | null = null;
   try {
     payload = await res.json();
   } catch {
@@ -70,5 +70,5 @@ export async function createStaffAccount(input: CreateStaffInput): Promise<Staff
   if (!res.ok) {
     throw new Error(payload?.error ?? `Création impossible (HTTP ${res.status}).`);
   }
-  return payload.staff as StaffProfile;
+  return payload!.staff as StaffProfile;
 }

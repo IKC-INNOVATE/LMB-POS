@@ -19,9 +19,9 @@ export default function TransfersPage() {
     try {
       const data = await listTransfers(200);
       setGroups(data);
-    } catch (err: any) {
+    } catch (err) {
       console.error('fetch transfers', err);
-      setLoadError(String(err?.message ?? err));
+      setLoadError(String(err instanceof Error ? err.message : err));
       setGroups([]);
     } finally {
       setLoading(false);
@@ -38,8 +38,8 @@ export default function TransfersPage() {
       const res = await confirmTransfer(refNumber);
       await fetch();
       alert(`Colis ${refNumber} confirmé : ${res.lines} mouvement(s) de stock appliqué(s).`);
-    } catch (err: any) {
-      alert(String(err?.message ?? err));
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
     } finally {
       setConfirming(null);
     }

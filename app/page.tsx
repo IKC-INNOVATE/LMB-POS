@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { createCustomer, searchCustomers, addLoyaltyPoints, listCustomers } from '@/lib/services/customers';
 import { createSaleWithCustomer, InsufficientStockError } from '@/lib/services/sales';
-import ReceiptModal from '@/components/pos/ReceiptModal';
-import { CartItem, Customer } from '@/types';
+import ReceiptModal, { ReceiptModalProps } from '@/components/pos/ReceiptModal';
+import { CartItem, Customer, SaleReceipt, ReceiptData } from '@/types';
 import CashExpenseButton from '@/components/pos/CashExpenseButton';
 import CloseRegisterButton from '@/components/pos/CloseRegisterButton';
 import OpenRegisterButton from '@/components/pos/OpenRegisterButton';
@@ -53,7 +53,7 @@ export default function HomePage() {
   });
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [receipt, setReceipt] = useState<any | null>(null);
+  const [receipt, setReceipt] = useState<ReceiptModalProps['receipt']>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>('ESPECES');
   const [splitCash, setSplitCash] = useState<string>('0');
@@ -93,6 +93,9 @@ export default function HomePage() {
     } catch (err) {
       console.warn('signOut failed', err);
     } finally {
+      // Rechargement complet volontaire (pas de navigation client) : garantit
+      // qu'aucun état d'authentification résiduel ne survit à la déconnexion.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = '/login';
     }
   };
@@ -257,7 +260,7 @@ export default function HomePage() {
   }, [catalogProducts, selectedGamme]);
 
   // Initiales affichées dans la case produit tant qu'aucune photo n'est
-  // renseignée (pas de champ image pour l'instant côté catalogue).
+  // renseignée (`product.photo_url`, déposée depuis Admin → Grille Tarifaire).
   const productInitials = (name: string) => {
     const words = name.trim().split(/\s+/).filter(Boolean);
     if (words.length === 0) return '?';
@@ -300,6 +303,9 @@ export default function HomePage() {
     };
 
     setSelectedCustomer(normalizedCustomer);
+    // selectedCustomer volontairement absent des dépendances : cet effet re-crée
+    // un nouvel objet à chaque exécution, l'ajouter provoquerait une boucle infinie.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCustomer?.id]);
 
   const subtotal = useMemo(
@@ -504,9 +510,8 @@ export default function HomePage() {
     setIsSubmittingSale(true);
     // Resilient flow: try service calls individually and never block the UI
     const paymentReference = `PAY-${Date.now()}`;
-    let saleResult: any = null;
-    let refreshedCustomer: any = null;
-    let serviceError: any = null;
+    let saleResult: { sale: SaleReceipt; receipt: ReceiptData } | null = null;
+    let refreshedCustomer: Customer | null = null;
 
     try {
       // Validate payment options
@@ -530,7 +535,7 @@ export default function HomePage() {
       }
       // Build payment payload
       let finalPaymentMethod = 'ESPECES';
-      let paymentDetails: any = null;
+      let paymentDetails: Record<string, number> | null = null;
 
       if (isPartial) {
         finalPaymentMethod = 'PARTIAL_PAYMENT';
@@ -590,7 +595,6 @@ export default function HomePage() {
         }
       } catch (err) {
         console.warn('Erreur addLoyaltyPoints (non bloquante):', err);
-        serviceError = serviceError ?? err;
       }
 
       // Ensure a receipt is generated locally even if services failed
@@ -599,7 +603,7 @@ export default function HomePage() {
 
       // Base = reçu construit par le service (mode de paiement réel, détails de
       // paiement, n° de reçu). On n'écrase QUE les champs fidélité calculés ici.
-      const serviceReceipt: any = saleResult?.receipt ?? {};
+      const serviceReceipt: Partial<ReceiptData> = saleResult?.receipt ?? {};
 
       const receiptPayload = {
         ...serviceReceipt,
@@ -1045,8 +1049,19 @@ export default function HomePage() {
                                 )}`}
                                 title={outOfStock ? `${product.name} — rupture de stock` : product.name}
                               >
-                                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/30 text-sm font-black text-white">
-                                  {productInitials(product.name)}
+                                <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-black/30 text-sm font-black text-white">
+                                  {product.photo_url ? (
+                                    // Photo hébergée sur Supabase Storage (URL dynamique) : <img>
+                                    // classique, pas de next/image (domaine non connu à la compilation).
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={product.photo_url}
+                                      alt={product.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    productInitials(product.name)
+                                  )}
                                 </span>
                                 <span className="line-clamp-2 text-[11px] font-bold leading-tight text-white">
                                   {product.name}
@@ -1225,7 +1240,7 @@ export default function HomePage() {
 
                 {isPartial && (
                   <div className="space-y-1 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
-                    <label className="text-xs font-medium text-amber-200">Montant versé aujourd'hui</label>
+                    <label className="text-xs font-medium text-amber-200">Montant versé aujourd&apos;hui</label>
                     <Input type="number" value={partialAmount} onChange={(e) => setPartialAmount(e.target.value)} className="rounded-lg" />
                     <p className="text-xs text-slate-400">Solde restant: {(Math.max(0, total - Number(partialAmount || 0))).toLocaleString('fr-FR')} FCFA</p>
                   </div>

@@ -17,11 +17,12 @@ import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import LoadingState from '@/components/ui/LoadingState';
+import type { Product } from '@/types';
 
 export default function PurchasesPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [supplierForm, setSupplierForm] = useState({
     name: '',
@@ -130,8 +131,8 @@ export default function PurchasesPage() {
       await fetchSuppliers();
       setSelectedSupplierId(supplier.id ?? selectedSupplierId);
       alert('Fournisseur ajouté.');
-    } catch (err: any) {
-      alert(String(err?.message ?? err));
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
     }
   };
 
@@ -214,8 +215,8 @@ export default function PurchasesPage() {
       setOrderItems([]);
       await fetchOrders();
       alert('Bon de commande créé avec succès.');
-    } catch (err: any) {
-      alert(String(err?.message ?? err));
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
     } finally {
       setCreatingOrder(false);
     }
@@ -230,8 +231,8 @@ export default function PurchasesPage() {
       await receivePurchaseOrder(orderId);
       await fetchOrders();
       alert('Réception validée. Les quantités reçues ont été ajoutées à la réserve centrale.');
-    } catch (err: any) {
-      alert(String(err?.message ?? err));
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
     } finally {
       setValidatingReception(null);
     }

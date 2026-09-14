@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { Customer, LoyaltyEvent } from '@/types';
+import { Customer } from '@/types';
 
 const normalizeCustomer = (row: Partial<Customer> | null | undefined): Partial<Customer> | null => {
   if (!row) return null;

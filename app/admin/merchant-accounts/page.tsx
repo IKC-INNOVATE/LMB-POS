@@ -608,7 +608,7 @@ function WithdrawalsSection({
 // VOLET 3 — Réconciliation
 // =====================================================================
 function ReconciliationSection({ storeParam }: { storeParam: StoreCode | null }) {
-  const initial = useMemo(defaultRange, []);
+  const initial = useMemo(() => defaultRange(), []);
   const [startInput, setStartInput] = useState(initial.start);
   const [endInput, setEndInput] = useState(initial.end);
   const [range, setRange] = useState(initial);
@@ -679,7 +679,7 @@ function ReconciliationSection({ storeParam }: { storeParam: StoreCode | null })
           </PrimaryButton>
         </div>
         <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-          Comparaison : <strong>solde d'ouverture + ventes encaissées (Wave / OM) − retraits saisis</strong> doit
+          Comparaison : <strong>solde d&apos;ouverture + ventes encaissées (Wave / OM) − retraits saisis</strong> doit
           égaler le <strong>solde de clôture saisi</strong>. Les ventes annulées / remboursées et les modes de
           paiement non reconnus sont exclus et listés à part.
         </p>
@@ -737,7 +737,7 @@ function ReconciliationSection({ storeParam }: { storeParam: StoreCode | null })
                       <p className="flex items-start gap-2 text-[11px] text-amber-200">
                         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         Saisir un relevé de solde daté au plus tard le {formatDate(range.start)} (ouverture) et un au
-                        {' '}{formatDate(range.end)} ou après (clôture) pour calculer l'écart.
+                        {' '}{formatDate(range.end)} ou après (clôture) pour calculer l&apos;écart.
                       </p>
                     ) : line.hasVariance ? (
                       <p className="flex items-center justify-between text-xs font-bold text-rose-200">

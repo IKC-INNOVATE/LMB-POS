@@ -42,7 +42,7 @@ const STORE_META: Record<StoreKey, { label: string; accent: string }> = {
 };
 
 export default function ComparativePage() {
-  const initial = useMemo(defaultRange, []);
+  const initial = useMemo(() => defaultRange(), []);
   const [startInput, setStartInput] = useState(initial.start);
   const [endInput, setEndInput] = useState(initial.end);
   const [range, setRange] = useState(initial);
@@ -249,9 +249,9 @@ function StoreCard({ store, metrics }: { store: StoreKey; metrics: StoreComparis
         <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-snug text-amber-200/90">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            {metrics.estimatedRevenueShare.toFixed(0)} % du chiffre d'affaires de cette boutique repose sur une{' '}
-            <strong>estimation de coût (65 % du prix de vente)</strong>, faute de coût d'achat réel. Renseignez le coût
-            d'achat des produits dans <strong>Admin → Grille Tarifaire</strong> pour une marge exacte.
+            {metrics.estimatedRevenueShare.toFixed(0)} % du chiffre d&apos;affaires de cette boutique repose sur une{' '}
+            <strong>estimation de coût (65 % du prix de vente)</strong>, faute de coût d&apos;achat réel. Renseignez le coût
+            d&apos;achat des produits dans <strong>Admin → Grille Tarifaire</strong> pour une marge exacte.
           </span>
         </p>
       ) : null}

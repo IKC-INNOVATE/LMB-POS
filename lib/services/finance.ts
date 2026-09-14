@@ -5,6 +5,7 @@ import {
   parseJson,
   parseNumber,
   resolveUnitCost,
+  type RawRecord,
 } from '@/lib/services/cost';
 
 export type FinancialPeriodFilter = 'TODAY' | 'LAST_7_DAYS' | 'THIS_MONTH';
@@ -44,7 +45,7 @@ export interface FinancialOverview {
   }>;
 }
 
-const normalizePaymentBucket = (paymentMethod?: string | null, paymentDetails?: any): keyof FinancialPaymentBreakdown => {
+const normalizePaymentBucket = (paymentMethod?: string | null, paymentDetails?: unknown): keyof FinancialPaymentBreakdown => {
   const raw = `${paymentMethod ?? ''} ${JSON.stringify(paymentDetails ?? {})}`.toUpperCase();
 
   if (/CASH|ESPECES|LIQUIDE/.test(raw)) return 'cash';
@@ -55,7 +56,7 @@ const normalizePaymentBucket = (paymentMethod?: string | null, paymentDetails?: 
   return 'other';
 };
 
-const getSalesTotal = (sale: any): number => {
+const getSalesTotal = (sale: RawRecord): number => {
   const rawValue = sale?.total_amount ?? sale?.totalAmountXof ?? sale?.total_amount_xof ?? sale?.amount ?? sale?.total;
   return parseNumber(rawValue);
 };
@@ -97,11 +98,11 @@ export async function getFinancialOverview(startDate: string, endDate: string): 
     );
   }
 
-  const sales = (salesResult.data ?? []) as any[];
-  const expenses = (expensesResult.data ?? []) as any[];
+  const sales = (salesResult.data ?? []) as RawRecord[];
+  const expenses = (expensesResult.data ?? []) as RawRecord[];
 
   // Clé (id OU sku, en minuscules) -> coût d'achat réel > 0.
-  const costByKey = buildCostByKey(productsResult.data as any[] | null);
+  const costByKey = buildCostByKey(productsResult.data as RawRecord[] | null);
 
   const paymentBreakdown: FinancialPaymentBreakdown = {
     cash: 0,
@@ -120,21 +121,21 @@ export async function getFinancialOverview(startDate: string, endDate: string): 
     const saleTotal = getSalesTotal(sale);
     totalRevenue += saleTotal;
 
-    const metadata = parseJson(sale.metadata ?? null);
+    const metadata = parseJson(sale.metadata ?? null) as RawRecord | null;
     const paymentDetails = parseJson(metadata?.payment_details ?? sale.payment_details ?? null);
-    const bucket = normalizePaymentBucket(sale.payment_method, paymentDetails);
+    const bucket = normalizePaymentBucket(sale.payment_method as string | null | undefined, paymentDetails);
     paymentBreakdown[bucket] += saleTotal;
 
-    const items = Array.isArray(metadata?.items)
+    const items: RawRecord[] = Array.isArray(metadata?.items)
       ? metadata.items
       : Array.isArray(sale.items)
-        ? sale.items
+        ? (sale.items as RawRecord[])
         : [];
 
     if (items.length > 0) {
       let itemCost = 0;
       let saleHasEstimate = false;
-      items.forEach((item: any) => {
+      items.forEach((item: RawRecord) => {
         const quantity = parseNumber(item?.quantity ?? 1);
         const { cost, estimated } = resolveUnitCost(item, costByKey);
         itemCost += quantity * cost;
@@ -169,12 +170,15 @@ export async function getFinancialOverview(startDate: string, endDate: string): 
     grossMarginRate,
     grossMarginIsEstimated,
     estimatedRevenueShare,
-    sales: sales.map((sale) => ({
-      id: sale.id ?? sale.receiptNumber ?? null,
-      total_amount: getSalesTotal(sale),
-      payment_method: sale.payment_method ?? null,
-      created_at: sale.created_at ?? null,
-      payment_details: parseJson(sale.metadata?.payment_details ?? sale.payment_details ?? null),
-    })),
+    sales: sales.map((sale) => {
+      const saleMetadata = parseJson(sale.metadata ?? null) as RawRecord | null;
+      return {
+        id: (sale.id ?? sale.receiptNumber ?? null) as string | number | null,
+        total_amount: getSalesTotal(sale),
+        payment_method: (sale.payment_method as string | undefined) ?? null,
+        created_at: (sale.created_at as string | undefined) ?? null,
+        payment_details: parseJson(saleMetadata?.payment_details ?? sale.payment_details ?? null),
+      };
+    }),
   };
 }

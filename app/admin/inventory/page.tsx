@@ -7,20 +7,25 @@ import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
 import { Product } from '@/types';
 
+interface InventoryProduct extends Product {
+  stock_threshold?: number;
+  stock_reserve?: number;
+}
+
 export default function InventoryPage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<InventoryProduct[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchProducts = async () => {
     const { data } = await supabase.from('lmb_products').select('*');
-    setProducts((data ?? []) as Product[]);
+    setProducts((data ?? []) as InventoryProduct[]);
   };
 
   useEffect(() => { fetchProducts(); }, []);
 
-  const getThreshold = (p: Product) => {
+  const getThreshold = (p: InventoryProduct) => {
     // allow optional product-level threshold, default to 5
-    return (p as any).stock_threshold ?? 5;
+    return p.stock_threshold ?? 5;
   };
 
   return (
@@ -44,15 +49,15 @@ export default function InventoryPage() {
               <th>Dakar</th>
               <th>Abidjan</th>
               <th>Réserve</th>
-              <th>Seuil d'alerte</th>
+              <th>Seuil d&apos;alerte</th>
             </tr>
           </thead>
           <tbody>
             {products.map((p) => {
               const threshold = getThreshold(p);
-              const d = Number((p as any).stock_dakar ?? 0);
-              const a = Number((p as any).stock_abidjan ?? 0);
-              const r = Number((p as any).stock_reserve ?? 0);
+              const d = Number(p.stock_dakar ?? 0);
+              const a = Number(p.stock_abidjan ?? 0);
+              const r = Number(p.stock_reserve ?? 0);
               const badge = (val: number) => {
                 if (val <= threshold) return <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-xs font-bold text-rose-300">{val}</span>;
                 if (val <= threshold * 2) return <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-bold text-amber-300">{val}</span>;

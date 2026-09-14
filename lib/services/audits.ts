@@ -40,7 +40,10 @@ const normalizeLocation = (location: string): InventoryLocation => {
   return 'dakar';
 };
 
-const buildAuditItems = (products: any[], location: InventoryLocation): InventoryAuditItem[] => {
+const buildAuditItems = (
+  products: Record<string, unknown>[],
+  location: InventoryLocation,
+): InventoryAuditItem[] => {
   const column = locationToStockColumn[location];
 
   return (products ?? []).map((product) => {
@@ -48,9 +51,9 @@ const buildAuditItems = (products: any[], location: InventoryLocation): Inventor
     const unitPrice = Number(product?.standard_retail_price_xof ?? product?.floor_price_xof ?? 0);
 
     return {
-      product_id: product.id,
-      sku: product.sku,
-      name: product.name,
+      product_id: String(product.id ?? ''),
+      sku: String(product.sku ?? ''),
+      name: String(product.name ?? ''),
       theoretical_stock: theoreticalStock,
       counted_stock: theoreticalStock,
       variance: 0,
@@ -147,9 +150,9 @@ export async function completeInventoryAudit(auditId: string): Promise<Inventory
 
   const location = normalizeLocation(audit.location);
   const stockColumn = locationToStockColumn[location];
-  const items = Array.isArray(audit.items) ? audit.items : [];
+  const items = (Array.isArray(audit.items) ? audit.items : []) as InventoryAuditItem[];
 
-  const productIds = items.map((item: any) => item.product_id).filter(Boolean);
+  const productIds = items.map((item) => item.product_id).filter(Boolean);
   const { data: products, error: productsError } = productIds.length
     ? await supabase.from('lmb_products').select('*').in('id', productIds)
     : { data: [], error: null };
@@ -176,7 +179,7 @@ export async function completeInventoryAudit(auditId: string): Promise<Inventory
     }
   }
 
-  const finalItems = items.map((item: any) => {
+  const finalItems = items.map((item) => {
     const variance = Number(item.counted_stock ?? 0) - Number(item.theoretical_stock ?? 0);
     const unitPrice = Number(item.unit_price_xof ?? 0);
     return {

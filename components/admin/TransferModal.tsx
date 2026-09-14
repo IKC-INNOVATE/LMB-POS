@@ -20,7 +20,7 @@ export default function TransferModal({ isOpen, onClose, products }: { isOpen: b
 
   const updateItem = (index: number, field: 'productId' | 'qty', value: string) => {
     const copy = [...items];
-    (copy[index] as any)[field] = value;
+    copy[index] = { ...copy[index], [field]: value };
     setItems(copy);
   };
 
@@ -34,8 +34,8 @@ export default function TransferModal({ isOpen, onClose, products }: { isOpen: b
       await createTransfer(from, to, payload, { createdBy: 'admin-ui' });
       alert('Transfert créé');
       onClose();
-    } catch (err: any) {
-      alert(String(err?.message ?? err));
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export default function TransferModal({ isOpen, onClose, products }: { isOpen: b
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label className="text-xs text-slate-400">Source</label>
-            <Select value={from} onChange={(e) => setFrom(e.target.value as any)}>
+            <Select value={from} onChange={(e) => setFrom(e.target.value as 'DAKAR' | 'ABIDJAN' | 'RESERVE')}>
               <option value="DAKAR">DAKAR</option>
               <option value="ABIDJAN">ABIDJAN</option>
               <option value="RESERVE">RÉSERVE</option>
@@ -60,7 +60,7 @@ export default function TransferModal({ isOpen, onClose, products }: { isOpen: b
           </div>
           <div>
             <label className="text-xs text-slate-400">Destination</label>
-            <Select value={to} onChange={(e) => setTo(e.target.value as any)}>
+            <Select value={to} onChange={(e) => setTo(e.target.value as 'DAKAR' | 'ABIDJAN' | 'RESERVE')}>
               <option value="DAKAR">DAKAR</option>
               <option value="ABIDJAN">ABIDJAN</option>
               <option value="RESERVE">RÉSERVE</option>

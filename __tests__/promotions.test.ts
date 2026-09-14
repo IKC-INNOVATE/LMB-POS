@@ -7,7 +7,7 @@ vi.mock('@/lib/supabase', () => ({
 
 async function loadServiceWithFrom(fromMock: ReturnType<typeof vi.fn>) {
   const { supabase } = await import('@/lib/supabase');
-  (supabase as any).from = fromMock;
+  Object.assign(supabase, { from: fromMock });
   return import('@/lib/services/promotions');
 }
 

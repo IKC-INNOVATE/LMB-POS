@@ -12,10 +12,21 @@ export interface PosProduct extends Product {
   stock: number;
 }
 
-const stockColumn = (storeCity: StoreCity): 'stock_dakar' | 'stock_abidjan' =>
-  storeCity === 'ABIDJAN' ? 'stock_abidjan' : 'stock_dakar';
+interface RawProductRow {
+  id: string;
+  sku?: string;
+  barcode?: string;
+  name?: string;
+  category_name?: string;
+  standard_retail_price_xof?: number;
+  floor_price_xof?: number;
+  cost_price_xof?: number;
+  stock_dakar?: number;
+  stock_abidjan?: number;
+  photo_url?: string | null;
+}
 
-const mapRow = (row: any, storeCity: StoreCity): PosProduct => {
+const mapRow = (row: RawProductRow, storeCity: StoreCity): PosProduct => {
   const dakar = Number(row.stock_dakar ?? 0);
   const abidjan = Number(row.stock_abidjan ?? 0);
   return {
@@ -30,6 +41,7 @@ const mapRow = (row: any, storeCity: StoreCity): PosProduct => {
     stock_dakar: dakar,
     stock_abidjan: abidjan,
     stock: storeCity === 'ABIDJAN' ? abidjan : dakar,
+    photo_url: row.photo_url ?? null,
   };
 };
 
@@ -133,4 +145,77 @@ export async function getProductByBarcode(
   }
 
   return data ? mapRow(data, storeCity) : null;
+}
+
+// =====================================================================
+// Photo produit (bucket Storage "product-photos" — cf. migration
+// 20260921_add_product_photos.sql). Réservé GERANT/DIRECTION côté RLS ;
+// l'UI n'affiche le contrôle de dépôt qu'à ces rôles, mais toute tentative
+// d'un autre rôle échouera de toute façon côté base (policy storage.objects).
+// =====================================================================
+
+const PRODUCT_PHOTO_BUCKET = 'product-photos';
+const PRODUCT_PHOTO_MAX_BYTES = 5 * 1024 * 1024; // 5 Mo, aligné sur file_size_limit du bucket.
+const PRODUCT_PHOTO_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+const extensionFor = (mimeType: string): string => {
+  if (mimeType === 'image/png') return 'png';
+  if (mimeType === 'image/webp') return 'webp';
+  return 'jpg';
+};
+
+/**
+ * Dépose (ou remplace) la photo d'un produit : upload dans le bucket Storage
+ * puis mise à jour de `lmb_products.photo_url` avec l'URL publique obtenue.
+ * Validation cliente du type/poids en repli du contrôle serveur (bucket
+ * `allowed_mime_types` / `file_size_limit`) — message d'erreur plus clair
+ * pour l'utilisateur en cas de refus.
+ */
+export async function uploadProductPhoto(productId: string, file: File): Promise<string> {
+  if (!productId) throw new Error('Produit introuvable (identifiant manquant).');
+
+  if (!PRODUCT_PHOTO_ALLOWED_TYPES.includes(file.type)) {
+    throw new Error('Format d\'image non supporté. Utilisez un JPEG, PNG ou WebP.');
+  }
+  if (file.size > PRODUCT_PHOTO_MAX_BYTES) {
+    throw new Error('Image trop volumineuse (5 Mo maximum).');
+  }
+
+  const path = `${productId}/${Date.now()}.${extensionFor(file.type)}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(PRODUCT_PHOTO_BUCKET)
+    .upload(path, file, { upsert: true, contentType: file.type });
+
+  if (uploadError) {
+    throw new Error(`Dépôt de la photo impossible : ${uploadError.message}`);
+  }
+
+  const { data: publicUrlData } = supabase.storage.from(PRODUCT_PHOTO_BUCKET).getPublicUrl(path);
+  const photoUrl = publicUrlData.publicUrl;
+
+  const { error: updateError } = await supabase
+    .from('lmb_products')
+    .update({ photo_url: photoUrl })
+    .eq('id', productId);
+
+  if (updateError) {
+    throw new Error(`Photo déposée mais non rattachée au produit : ${updateError.message}`);
+  }
+
+  return photoUrl;
+}
+
+/** Retire la photo d'un produit (remet `photo_url` à NULL). */
+export async function removeProductPhoto(productId: string): Promise<void> {
+  if (!productId) throw new Error('Produit introuvable (identifiant manquant).');
+
+  const { error } = await supabase
+    .from('lmb_products')
+    .update({ photo_url: null })
+    .eq('id', productId);
+
+  if (error) {
+    throw new Error(`Suppression de la photo impossible : ${error.message}`);
+  }
 }

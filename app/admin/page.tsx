@@ -5,18 +5,16 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import ReceiptModal from '@/components/pos/ReceiptModal';
-import { Product, Customer, SaleReceipt } from '@/types';
+import ReceiptModal, { ReceiptModalProps, ReceiptItem } from '@/components/pos/ReceiptModal';
+import { Product, SaleReceipt } from '@/types';
 import { createTransfer } from '@/lib/services/inventory';
 import { updateProductPrice } from '@/lib/services/products';
 import { getCurrentStaff, StaffRole } from '@/lib/services/auth';
 import {
-  TrendingUp,
   Package,
   ShieldCheck,
   Building2,
   DollarSign,
-  Download,
   Tag,
   Plus,
   Trash2,
@@ -26,37 +24,35 @@ import {
   Truck,
   QrCode,
   AlertTriangle,
-  ArrowRightLeft,
-  Flame,
-  ArrowDownUp,
-  PackageCheck,
   Scale,
-  Calendar,
-  AlertOctagon,
-  Eye,
-  CheckCircle,
-  Users,
-  Camera,
-  Check,
-  Activity,
-  Sparkles,
-  UserCheck,
-  Video,
-  FileText,
   Printer,
   Receipt,
-  ClipboardList,
   Boxes,
   FileCheck,
-  History,
-  User,
   Handshake
 } from 'lucide-react';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
 import PrimaryButton from '@/components/ui/PrimaryButton';
-import SecondaryButton from '@/components/ui/SecondaryButton';
+
+type InlineTabId = 'STOCK' | 'INVENTORY_REPORTS' | 'ADMIN_FINANCES' | 'SALES_AUDIT';
+
+interface LegacySaleItem {
+  id?: string;
+  product_id?: string;
+  sku?: string;
+  name?: string;
+  quantity?: number;
+  qty?: number;
+  unit_price_xof?: number;
+  appliedUnitPriceXof?: number;
+  total_price_xof?: number;
+  product?: {
+    id?: string;
+    sku?: string;
+    name?: string;
+    standard_retail_price_xof?: number;
+  };
+}
 
 interface ShipmentCartItem {
   productId: string;
@@ -71,6 +67,14 @@ interface ProductSalesStat extends Product {
   totalStock: number;
 }
 
+interface InventoryReportDetailItem {
+  sku: string;
+  name: string;
+  theoretical: number;
+  physical: number;
+  discrepancy: number;
+}
+
 interface InventoryReportItem {
   id: string;
   created_at: string;
@@ -80,38 +84,40 @@ interface InventoryReportItem {
   total_counted: number;
   net_variance: number;
   status: string;
-  details: any[];
+  details: InventoryReportDetailItem[];
 }
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [staffRole, setStaffRole] = useState<StaffRole | null>(null);
+  // Horodatage de repli, figé une seule fois au montage (jamais recalculé
+  // pendant le rendu), pour les rares ventes sans date enregistrée.
+  const [fallbackNowIso] = useState(() => new Date().toISOString());
 
   // ---------------------------------------------------------------------------
   // DONNÉES CLOUD & ÉTATS
   // ---------------------------------------------------------------------------
   const [products, setProducts] = useState<Product[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<SaleReceipt[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [transfers, setTransfers] = useState<any[]>([]);
-  const [inventoryReports, setInventoryReports] = useState<any[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<Record<string, unknown>[]>([]);
+  const [, setTransfers] = useState<Record<string, unknown>[]>([]);
+  const [inventoryReports, setInventoryReports] = useState<InventoryReportItem[]>([]);
+  const [, setAttendanceRecords] = useState<Record<string, unknown>[]>([]);
 
   // NAVIGATION ONGLETS
-  const [activeTab, setActiveTab] = useState<
-    'STOCK' | 'INVENTORY_REPORTS' | 'ADMIN_FINANCES' | 'COMPARATIVE' | 'LIVE_CAMERAS' | 'WAVE_OM_GATEWAY' | 'PRICING' | 'ATTENDANCE' | 'SALES_AUDIT'
-  >('STOCK');
+  // Seuls STOCK / INVENTORY_REPORTS / ADMIN_FINANCES / SALES_AUDIT sont rendus
+  // en ligne dans ce fichier - les autres onglets renvoient vers une page dédiée.
+  const [activeTab, setActiveTab] = useState<InlineTabId>('STOCK');
 
   // MODALE DÉTAIL D'UN RAPPORT D'INVENTAIRE
   const [selectedReportDetail, setSelectedReportDetail] = useState<InventoryReportItem | null>(null);
 
   // TRI & RECHERCHE CATALOGUE
-  const [stockSortMode, setStockSortMode] = useState<'SALES_DESC' | 'SALES_ASC' | 'SKU' | 'LOW_STOCK'>('SALES_DESC');
+  const [stockSortMode] = useState<'SALES_DESC' | 'SALES_ASC' | 'SKU' | 'LOW_STOCK'>('SALES_DESC');
   const [searchStock, setSearchStock] = useState<string>('');
 
   // MODALE TICKET DE CAISSE
-  const [saleReceiptToView, setSaleReceiptToView] = useState<any | null>(null);
+  const [saleReceiptToView, setSaleReceiptToView] = useState<ReceiptModalProps['receipt'] | null>(null);
   const [isSaleReceiptModalOpen, setIsSaleReceiptModalOpen] = useState<boolean>(false);
 
   // MODALE NOUVEAU SOIN
@@ -134,24 +140,7 @@ export default function AdminDashboardPage() {
   const [shippingCostXof, setShippingCostXof] = useState<string>('');
   const [shipmentTrackingRef, setShipmentTrackingRef] = useState<string>('');
   const [isSubmittingShipment, setIsSubmittingShipment] = useState<boolean>(false);
-  const [selectedTransferForSlip, setSelectedTransferForSlip] = useState<any | null>(null);
-  const [selectedTransferToReceive, setSelectedTransferToReceive] = useState<any | null>(null);
-  const [receivedQuantities, setReceivedQuantities] = useState<Record<string, number>>({});
-  const [isReceivingShipment, setIsReceivingShipment] = useState<boolean>(false);
-
-  // CHARGES MANUELLES
-  const [expenseFilterStore, setExpenseFilterStore] = useState<'ALL' | 'DAKAR' | 'ABIDJAN'>('ALL');
-  const [newExpenseCategory, setNewExpenseCategory] = useState<string>('LOYER');
-  const [newExpenseStore, setNewExpenseStore] = useState<'DAKAR' | 'ABIDJAN'>('DAKAR');
-  const [newExpenseReason, setNewExpenseReason] = useState<string>('');
-  const [newExpenseAmount, setNewExpenseAmount] = useState<string>('');
-
-  // FLUX VIDÉO & MARCHANDS
-  const [selectedCameraFeed, setSelectedCameraFeed] = useState<'DAKAR' | 'ABIDJAN'>('DAKAR');
-  const [waveMerchantPhoneDkr, setWaveMerchantPhoneDkr] = useState('+221 77 000 00 00');
-  const [omMerchantPhoneDkr, setOmMerchantPhoneDkr] = useState('+221 77 111 11 11');
-  const [waveMerchantPhoneAbj, setWaveMerchantPhoneAbj] = useState('+225 07 00 00 00 00');
-  const [omMerchantPhoneAbj, setOmMerchantPhoneAbj] = useState('+225 07 11 11 11 11');
+  const [, setSelectedTransferForSlip] = useState<Record<string, unknown> | null>(null);
 
   // ---------------------------------------------------------------------------
   // SYNCHRONISATION SUPABASE & LOCALSTORAGE
@@ -160,7 +149,7 @@ export default function AdminDashboardPage() {
     try {
       // 1. Produits
       const { data: pData } = await supabase.from('lmb_products').select('*');
-      let combinedProducts: Product[] = pData ? (pData as Product[]) : [];
+      const combinedProducts: Product[] = pData ? (pData as Product[]) : [];
       const localAdded = localStorage.getItem('lmb_local_custom_products');
       if (localAdded) {
         const parsed: Product[] = JSON.parse(localAdded);
@@ -182,7 +171,7 @@ export default function AdminDashboardPage() {
 
       // 2. Ventes & Dépenses
       const { data: sData } = await supabase.from('lmb_sales').select('*').order('created_at', { ascending: false });
-      if (sData) setSales(sData as any[]);
+      if (sData) setSales(sData as SaleReceipt[]);
 
       const { data: customerOrdersData } = await supabase
         .from('lmb_customer_orders')
@@ -199,7 +188,7 @@ export default function AdminDashboardPage() {
             .in('id', customerIds);
 
           const customerMap = new Map((customersData ?? []).map((customer) => [customer.id, customer]));
-          setSales((prev) => {
+          setSales(() => {
             const enriched = [...(sData ?? [])];
             enriched.forEach((sale) => {
               const matchingOrder = customerOrdersData.find((order) => order.sale_id === sale.id);
@@ -216,12 +205,12 @@ export default function AdminDashboardPage() {
       }
 
       const { data: eData } = await supabase.from('lmb_expenses').select('*').order('created_at', { ascending: false });
-      let combinedExpenses = eData || [];
+      const combinedExpenses: Record<string, unknown>[] = eData || [];
       const localExp = localStorage.getItem('lmb_local_expenses');
       if (localExp) {
         const parsedExp = JSON.parse(localExp);
-        parsedExp.forEach((le: any) => {
-          if (!combinedExpenses.some((e: any) => e.id === le.id)) {
+        parsedExp.forEach((le: Record<string, unknown>) => {
+          if (!combinedExpenses.some((e) => e.id === le.id)) {
             combinedExpenses.push(le);
           }
         });
@@ -239,11 +228,11 @@ export default function AdminDashboardPage() {
 
       // 4. Rapports d'Inventaires Physiques
       const { data: invData } = await supabase.from('inventory_reports').select('*').order('created_at', { ascending: false });
-      let combinedReports: InventoryReportItem[] = invData ? (invData as InventoryReportItem[]) : [];
+      const combinedReports: InventoryReportItem[] = invData ? (invData as InventoryReportItem[]) : [];
       const localInv = localStorage.getItem('lmb_inventory_reports');
       if (localInv) {
         const parsedInv = JSON.parse(localInv);
-        parsedInv.forEach((li: any) => {
+        parsedInv.forEach((li: InventoryReportItem) => {
           if (!combinedReports.some((r) => r.id === li.id)) {
             combinedReports.push(li);
           }
@@ -377,7 +366,9 @@ export default function AdminDashboardPage() {
 
     try {
       await supabase.from('lmb_products').update({ [field]: numVal }).eq('id', productId);
-    } catch (err) {}
+    } catch {
+      // silencieux : mise à jour optimiste déjà appliquée côté UI
+    }
   };
 
   /**
@@ -419,14 +410,16 @@ export default function AdminDashboardPage() {
           performed_by: 'Direction Générale',
         },
       ]);
-    } catch (err) {}
+    } catch {
+      // silencieux : ajout optimiste déjà appliqué côté UI
+    }
   };
 
   const productsWithSalesStats = useMemo<ProductSalesStat[]>(() => {
     const salesMap: Record<string, { qtySold: number; revenueXof: number }> = {};
     sales.forEach((s) => {
       if (s.items_json && Array.isArray(s.items_json)) {
-        s.items_json.forEach((item: any) => {
+        s.items_json.forEach((item: LegacySaleItem) => {
           const pId = item.product?.id;
           const qty = item.quantity || 1;
           const price = item.appliedUnitPriceXof || item.product?.standard_retail_price_xof || 0;
@@ -614,8 +607,8 @@ export default function AdminDashboardPage() {
         `Transfert ${transfer.transfer_number} créé (statut EN ATTENTE). Le stock sera déplacé à la confirmation de réception à Dakar.`,
       );
       await fetchAdminData();
-    } catch (err: any) {
-      alert(`Expédition NON enregistrée : ${err?.message ?? err}`);
+    } catch (err) {
+      alert(`Expédition NON enregistrée : ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSubmittingShipment(false);
     }
@@ -746,7 +739,10 @@ export default function AdminDashboardPage() {
                     router.push('/admin/service-providers');
                     return;
                   }
-                  setActiveTab(tab.id as any);
+                  const inlineTabIds: InlineTabId[] = ['STOCK', 'INVENTORY_REPORTS', 'ADMIN_FINANCES', 'SALES_AUDIT'];
+                  if ((inlineTabIds as string[]).includes(tab.id)) {
+                    setActiveTab(tab.id as InlineTabId);
+                  }
                 }}
                 className={`px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 transition whitespace-nowrap cursor-pointer ${
                   activeTab === tab.id
@@ -793,7 +789,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <h3 className="font-bold text-sm text-slate-100 flex items-center gap-2">
                     <Boxes className="w-4 h-4 text-cyan-400" />
-                    Historique des Rapports d'Inventaires Physiques ({inventoryReports.length})
+                    Historique des Rapports d&apos;Inventaires Physiques ({inventoryReports.length})
                   </h3>
                   <p className="text-xs text-slate-400">Données enregistrées en temps réel par les caissières à Dakar et Abidjan</p>
                 </div>
@@ -802,7 +798,7 @@ export default function AdminDashboardPage() {
               {inventoryReports.length === 0 ? (
                 <div className="text-center py-12 space-y-2">
                   <Boxes className="w-10 h-10 text-slate-600 mx-auto stroke-1" />
-                  <p className="text-slate-400 text-xs">Aucun inventaire physique n'a encore été transmis.</p>
+                  <p className="text-slate-400 text-xs">Aucun inventaire physique n&apos;a encore été transmis.</p>
                   <p className="text-[11px] text-slate-600">Effectuez un inventaire depuis la caisse POS pour voir apparaître le rapport ici.</p>
                 </div>
               ) : (
@@ -920,7 +916,7 @@ export default function AdminDashboardPage() {
                   <Truck className="w-5 h-5 text-amber-400" />
                   <div>
                     <h3 className="font-bold text-sm text-slate-100">Expédier un Colis Multi-Produits (Abidjan 🇨🇮 ➔ Dakar 🇸🇳)</h3>
-                    <p className="text-xs text-slate-400">Déduction automatique du stock d'Abidjan et imputation des frais cargo sur Dakar.</p>
+                    <p className="text-xs text-slate-400">Déduction automatique du stock d&apos;Abidjan et imputation des frais cargo sur Dakar.</p>
                   </div>
                 </div>
                 <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
@@ -1240,20 +1236,22 @@ export default function AdminDashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 font-mono">
-                      {sales.map((sale) => {
+                      {sales.map((sale, saleIndex) => {
                         const safeTotal = Number(sale.total_amount_xof ?? sale.totalAmountXof ?? 0);
                         const safeDiscount = Number(sale.discount_xof ?? sale.totalDiscountXof ?? 0);
                         const customerName = sale.customer_name ?? sale.customerName ?? 'Client non identifié';
                         const customerPhone = sale.customer_phone ?? sale.customerPhone ?? '—';
-                        const vipStatus = sale.customer_vip ?? sale.customerVip ?? 'STANDARD';
+                        const rawVipStatus = sale.customer_vip ?? sale.customerVip ?? 'STANDARD';
+                        const vipStatus: 'STANDARD' | 'VIP' | 'VIP_PREMIUM' =
+                          rawVipStatus === 'VIP' || rawVipStatus === 'VIP_PREMIUM' ? rawVipStatus : 'STANDARD';
 
                         return (
-                          <tr key={sale.id ?? sale.receiptNumber ?? Math.random()} className="hover:bg-slate-800/40 transition">
+                          <tr key={sale.id ?? sale.receiptNumber ?? `sale-${saleIndex}`} className="hover:bg-slate-800/40 transition">
                             <td className="py-3 px-3 text-cyan-300 font-bold">{sale.receiptNumber ?? sale.id ?? '—'}</td>
                             <td className="py-3 px-3 text-slate-300 font-sans">
-                              {new Date(sale.created_at ?? sale.createdAt ?? Date.now()).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}{' '}
+                              {new Date(sale.created_at ?? sale.createdAt ?? fallbackNowIso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}{' '}
                               <span className="text-slate-500 text-[10px]">
-                                ({new Date(sale.created_at ?? sale.createdAt ?? Date.now()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})
+                                ({new Date(sale.created_at ?? sale.createdAt ?? fallbackNowIso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})
                               </span>
                             </td>
                             <td className="py-3 px-3 font-sans text-slate-200">
@@ -1268,14 +1266,14 @@ export default function AdminDashboardPage() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const items = Array.isArray(sale.items_json) ? sale.items_json.map((item: any) => ({
+                                  const items: ReceiptItem[] = Array.isArray(sale.items_json) ? sale.items_json.map((item: LegacySaleItem) => ({
                                     id: item.id ?? item.product_id ?? `${sale.id}-${Math.random()}`,
                                     sku: item.sku ?? item.product?.sku ?? 'SKU',
                                     name: item.name ?? item.product?.name ?? 'Produit',
                                     quantity: Number(item.quantity ?? item.qty ?? 1),
                                     unit_price_xof: Number(item.unit_price_xof ?? item.appliedUnitPriceXof ?? item.product?.standard_retail_price_xof ?? 0),
                                     total_price_xof: Number(item.total_price_xof ?? ((item.unit_price_xof ?? item.appliedUnitPriceXof ?? item.product?.standard_retail_price_xof ?? 0) * (item.quantity ?? item.qty ?? 1))),
-                                  })) : (sale.items ?? []).map((item: any) => ({
+                                  })) : (sale.items ?? []).map((item: LegacySaleItem) => ({
                                     id: item.product?.id ?? item.id ?? `${sale.id}-${Math.random()}`,
                                     sku: item.product?.sku ?? 'SKU',
                                     name: item.product?.name ?? item.name ?? 'Produit',
@@ -1288,7 +1286,7 @@ export default function AdminDashboardPage() {
                                     receiptNumber: sale.receiptNumber ?? sale.id ?? 'LMB-000',
                                     createdAt: sale.created_at ?? sale.createdAt ?? new Date().toISOString(),
                                     cashierName: sale.cashierName ?? 'Inconnu',
-                                    storeName: sale.storeName ?? (sale as any).store_code ?? 'Inconnu',
+                                    storeName: sale.storeName ?? sale.store_code ?? 'Inconnu',
                                     customer: {
                                       full_name: customerName,
                                       phone: customerPhone,
@@ -1333,7 +1331,7 @@ export default function AdminDashboardPage() {
               <div>
                 <h3 className="text-base font-bold text-slate-100 font-serif flex items-center gap-2">
                   <Boxes className="w-5 h-5 text-cyan-400" />
-                  Détail du Rapport d'Inventaire
+                  Détail du Rapport d&apos;Inventaire
                 </h3>
                 <p className="text-slate-400 text-[11px] font-sans mt-0.5">
                   {selectedReportDetail.location_country} • Effectué par : <strong className="text-cyan-300">{selectedReportDetail.cashier_name}</strong>
@@ -1346,6 +1344,7 @@ export default function AdminDashboardPage() {
                 type="button"
                 onClick={() => setSelectedReportDetail(null)}
                 className="text-slate-400 hover:text-slate-200 text-sm"
+                aria-label="Fermer"
               >
                 ✕
               </button>
@@ -1380,7 +1379,7 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {(selectedReportDetail.details || []).map((d: any, idx: number) => (
+                  {(selectedReportDetail.details || []).map((d, idx: number) => (
                     <tr key={idx} className="hover:bg-slate-800/20">
                       <td className="py-1.5 font-bold text-cyan-400">{d.sku}</td>
                       <td className="py-1.5 font-sans text-slate-200 truncate max-w-[220px]">{d.name}</td>
@@ -1415,7 +1414,7 @@ export default function AdminDashboardPage() {
                 className="py-2.5 bg-gradient-to-r from-cyan-500 to-teal-300 text-slate-950 font-bold rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer font-sans"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Imprimer l'Audit</span>
+                <span>Imprimer l&apos;Audit</span>
               </button>
             </div>
           </div>
@@ -1442,7 +1441,7 @@ export default function AdminDashboardPage() {
                 <Plus className="w-5 h-5 text-cyan-400" />
                 Enregistrer un Nouveau Soin LMB
               </h3>
-              <button type="button" onClick={() => setIsNewProductModalOpen(false)} className="text-slate-400 hover:text-slate-200">
+              <button type="button" onClick={() => setIsNewProductModalOpen(false)} className="text-slate-400 hover:text-slate-200" aria-label="Fermer">
                 ✕
               </button>
             </div>

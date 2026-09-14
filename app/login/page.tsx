@@ -26,7 +26,7 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       router.replace('/');
-    } catch (err: any) {
+    } catch (err) {
       console.warn('Connexion refusée:', err);
       setError('Email ou mot de passe incorrect.');
     } finally {

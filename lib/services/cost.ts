@@ -10,7 +10,7 @@ export const parseNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-export const parseJson = (value: unknown): any => {
+export const parseJson = (value: unknown): unknown => {
   if (typeof value === 'string') {
     try {
       return JSON.parse(value);
@@ -33,7 +33,9 @@ export const findFirstNumber = (values: unknown[]): number => {
 /** Fraction du prix de vente retenue comme coût quand le coût réel est inconnu. */
 export const ESTIMATED_COST_RATIO = 0.65;
 
-export const getItemSellingPrice = (item: any): number =>
+export type RawRecord = Record<string, unknown>;
+
+export const getItemSellingPrice = (item: RawRecord): number =>
   parseNumber(item?.unit_price_xof ?? item?.price_xof ?? item?.selling_price_xof ?? item?.total_price_xof);
 
 /**
@@ -43,7 +45,7 @@ export const getItemSellingPrice = (item: any): number =>
  *  - sinon `estimated` : repli 65 % du prix de vente, PRODUIT PAR PRODUIT.
  */
 export const resolveUnitCost = (
-  item: any,
+  item: RawRecord,
   costByKey: Map<string, number>,
 ): { cost: number; estimated: boolean } => {
   if (!item || typeof item !== 'object') return { cost: 0, estimated: false };
@@ -71,9 +73,13 @@ export const resolveUnitCost = (
  * à partir des lignes `lmb_products` (`cost_price_xof`). Identique à la logique
  * inline de `getFinancialOverview`.
  */
-export const buildCostByKey = (products: any[] | null | undefined): Map<string, number> => {
+export const buildCostByKey = <
+  T extends { id?: unknown; sku?: unknown; cost_price_xof?: unknown },
+>(
+  products: T[] | null | undefined,
+): Map<string, number> => {
   const costByKey = new Map<string, number>();
-  (products ?? []).forEach((product: any) => {
+  (products ?? []).forEach((product) => {
     const cost = parseNumber(product.cost_price_xof);
     if (cost > 0) {
       if (product.id != null) costByKey.set(String(product.id).toLowerCase(), cost);

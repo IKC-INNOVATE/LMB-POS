@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { parseJson, parseNumber } from '@/lib/services/cost';
+import { parseJson, parseNumber, type RawRecord } from '@/lib/services/cost';
 
 // =====================================================================
 // Comptes Marchands (Wave / Orange Money) — LECTURE + saisie manuelle.
@@ -91,14 +91,14 @@ export interface CurrentBalance {
   snapshot: BalanceSnapshot | null;
 }
 
-const mapSnapshot = (row: any): BalanceSnapshot => ({
+const mapSnapshot = (row: RawRecord): BalanceSnapshot => ({
   id: String(row.id),
   store_code: String(row.store_code ?? ''),
   platform: (row.platform === 'OM' ? 'OM' : 'WAVE') as MerchantPlatform,
   balance_xof: parseNumber(row.balance_xof),
   observed_at: String(row.observed_at ?? '').slice(0, 10),
   recorded_by: String(row.recorded_by ?? ''),
-  note: row.note ?? null,
+  note: (row.note as string | null | undefined) ?? null,
   created_at: String(row.created_at ?? ''),
 });
 
@@ -192,15 +192,15 @@ export interface MerchantWithdrawal {
   created_at: string;
 }
 
-const mapWithdrawal = (row: any): MerchantWithdrawal => ({
+const mapWithdrawal = (row: RawRecord): MerchantWithdrawal => ({
   id: String(row.id),
   store_code: String(row.store_code ?? ''),
   platform: (row.platform === 'OM' ? 'OM' : 'WAVE') as MerchantPlatform,
   amount_xof: parseNumber(row.amount_xof),
   transfer_date: String(row.transfer_date ?? '').slice(0, 10),
-  bank_reference: row.bank_reference ?? null,
+  bank_reference: (row.bank_reference as string | null | undefined) ?? null,
   recorded_by: String(row.recorded_by ?? ''),
-  note: row.note ?? null,
+  note: (row.note as string | null | undefined) ?? null,
   created_at: String(row.created_at ?? ''),
 });
 
@@ -344,10 +344,10 @@ export interface ReconciliationResult {
   };
 }
 
-const getSaleTotal = (sale: any): number =>
+const getSaleTotal = (sale: RawRecord): number =>
   parseNumber(sale?.total_amount_xof ?? sale?.total_amount ?? sale?.amount ?? sale?.total);
 
-const getSaleRef = (sale: any): string =>
+const getSaleRef = (sale: RawRecord): string =>
   String(sale?.receipt_number ?? sale?.id ?? '(sans référence)');
 
 /**
@@ -357,9 +357,9 @@ const getSaleRef = (sale: any): string =>
  * Renvoie null si la structure est inexploitable -> la vente ira dans
  * splitUnventilated (jamais imputée à une plateforme).
  */
-function splitLegs(sale: any): Array<{ cls: PaymentClass; amount: number }> | null {
+function splitLegs(sale: RawRecord): Array<{ cls: PaymentClass; amount: number }> | null {
   const meta = parseJson(sale?.metadata);
-  const details = meta && typeof meta === 'object' ? meta.payment_details : null;
+  const details = meta && typeof meta === 'object' ? (meta as RawRecord).payment_details : null;
   if (!details || typeof details !== 'object') return null;
 
   const legs: Array<{ cls: PaymentClass; amount: number }> = [];
@@ -396,7 +396,7 @@ export async function getReconciliation(
   ]);
 
   if (salesResult.error) throw salesResult.error;
-  const sales = (salesResult.data ?? []) as any[];
+  const sales = (salesResult.data ?? []) as RawRecord[];
 
   // Accumulateurs par couple boutique|plateforme.
   const key = (s: StoreCode, p: MerchantPlatform) => `${s}|${p}`;

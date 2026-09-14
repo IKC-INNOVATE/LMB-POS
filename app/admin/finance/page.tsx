@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
 import { useEffect, useMemo, useState } from 'react';
@@ -293,9 +292,9 @@ export default function FinancePage() {
                   <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-snug text-amber-200/90">
                     <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     <span>
-                      {overview.estimatedRevenueShare.toFixed(0)} % du chiffre d'affaires repose sur une
-                      <strong> estimation de coût (65 % du prix de vente)</strong>, faute de coût d'achat réel.
-                      Renseignez le coût d'achat des produits dans <strong>Admin → Catalogue des Soins</strong> pour une marge exacte.
+                      {overview.estimatedRevenueShare.toFixed(0)} % du chiffre d&apos;affaires repose sur une
+                      <strong> estimation de coût (65 % du prix de vente)</strong>, faute de coût d&apos;achat réel.
+                      Renseignez le coût d&apos;achat des produits dans <strong>Admin → Catalogue des Soins</strong> pour une marge exacte.
                     </span>
                   </p>
                 ) : null}

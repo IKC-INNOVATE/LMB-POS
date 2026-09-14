@@ -39,7 +39,7 @@ export type ReceiptModalProps = {
     totalXof: number;
     paymentMethod: string;
     paymentReference?: string;
-      paymentDetails?: any;
+      paymentDetails?: Record<string, unknown> | null;
       notes?: string;
     pointsEarned?: number;
     pointsBalance?: number;
@@ -97,10 +97,6 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
   const vipStatus = receipt.vipStatus ?? receipt.customer?.vip_status ?? 'STANDARD';
   const pointsBalance = receipt.pointsBalance ?? Number(receipt.customer?.loyalty_points ?? 0);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const handleDownloadPdf = () => {
     const doc = new jsPDF({ unit: 'mm', format: [80, 220] });
     const margin = 5;
@@ -150,7 +146,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
     // Show paymentDetails for split or partial payments
     if (receipt.paymentDetails) {
       y += lineHeight;
-      const pd = receipt.paymentDetails as any;
+      const pd = receipt.paymentDetails;
       if (receipt.paymentMethod === 'SPLIT') {
         const cash = pd.cash ?? 0;
         const otherKey = Object.keys(pd).find((k) => k !== 'cash') ?? 'other';
@@ -159,8 +155,8 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
         y += lineHeight;
         doc.text(`${otherKey}: ${fmtPdf(Number(otherVal))} FCFA`, margin, y);
       } else if (receipt.paymentMethod === 'PARTIAL_PAYMENT') {
-        const paid = pd.paid ?? 0;
-        const balance = pd.balance ?? Math.max(0, receipt.totalXof - paid);
+        const paid = Number(pd.paid ?? 0);
+        const balance = Number(pd.balance ?? Math.max(0, receipt.totalXof - paid));
         doc.text(`Acompte versé: ${fmtPdf(Number(paid))} FCFA`, margin, y);
         y += lineHeight;
         doc.text(`Solde restant: ${fmtPdf(Number(balance))} FCFA`, margin, y);
@@ -288,7 +284,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
                 <div className="mt-2 text-sm text-slate-200">
                   <div>Espèces : {Number(receipt.paymentDetails.cash ?? 0).toLocaleString('fr-FR')} FCFA</div>
                   {Object.keys(receipt.paymentDetails).filter(k => k !== 'cash').map(k => (
-                    <div key={k}>{k} : {Number((receipt.paymentDetails as any)[k] ?? 0).toLocaleString('fr-FR')} FCFA</div>
+                    <div key={k}>{k} : {Number(receipt.paymentDetails?.[k] ?? 0).toLocaleString('fr-FR')} FCFA</div>
                   ))}
                 </div>
               )}
@@ -296,7 +292,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
               {receipt.paymentDetails && receipt.paymentMethod === 'PARTIAL_PAYMENT' && (
                 <div className="mt-2 text-sm text-slate-200">
                   <div>Acompte versé : {Number(receipt.paymentDetails.paid ?? 0).toLocaleString('fr-FR')} FCFA</div>
-                  <div>Solde restant à payer : {Number(receipt.paymentDetails.balance ?? Math.max(0, receipt.totalXof - (receipt.paymentDetails.paid ?? 0))).toLocaleString('fr-FR')} FCFA</div>
+                  <div>Solde restant à payer : {Number(receipt.paymentDetails.balance ?? Math.max(0, receipt.totalXof - Number(receipt.paymentDetails.paid ?? 0))).toLocaleString('fr-FR')} FCFA</div>
                 </div>
               )}
 
@@ -420,14 +416,14 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
             <div style={{ marginTop: '4px' }}>
               <div>Espèces: {Number(receipt.paymentDetails.cash ?? 0).toLocaleString('fr-FR')} FCFA</div>
               {Object.keys(receipt.paymentDetails).filter(k => k !== 'cash').map(k => (
-                <div key={k}>{k}: {Number((receipt.paymentDetails as any)[k] ?? 0).toLocaleString('fr-FR')} FCFA</div>
+                <div key={k}>{k}: {Number(receipt.paymentDetails?.[k] ?? 0).toLocaleString('fr-FR')} FCFA</div>
               ))}
             </div>
           )}
           {receipt.paymentDetails && receipt.paymentMethod === 'PARTIAL_PAYMENT' && (
             <div style={{ marginTop: '4px' }}>
               <div>Acompte versé: {Number(receipt.paymentDetails.paid ?? 0).toLocaleString('fr-FR')} FCFA</div>
-              <div>Solde restant: {Number(receipt.paymentDetails.balance ?? Math.max(0, receipt.totalXof - (receipt.paymentDetails.paid ?? 0))).toLocaleString('fr-FR')} FCFA</div>
+              <div>Solde restant: {Number(receipt.paymentDetails.balance ?? Math.max(0, receipt.totalXof - Number(receipt.paymentDetails.paid ?? 0))).toLocaleString('fr-FR')} FCFA</div>
             </div>
           )}
         </div>

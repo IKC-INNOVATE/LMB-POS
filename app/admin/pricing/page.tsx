@@ -21,6 +21,8 @@ import {
 import {
   listProducts,
   updateProductPrice,
+  uploadProductPhoto,
+  removeProductPhoto,
   type EditablePriceField,
   type PosProduct,
 } from '@/lib/services/products';
@@ -42,6 +44,15 @@ const formatMoney = (value: number) =>
 const digitsToNumber = (raw: string): number => {
   const digits = raw.replace(/\D/g, '');
   return digits === '' ? 0 : parseInt(digits, 10);
+};
+
+// Initiales de repli tant qu'aucune photo n'est déposée (même logique que la
+// Caisse, cf. `productInitials` dans app/page.tsx).
+const productInitials = (name: string) => {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '?';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 };
 
 type CellStatus = 'saving' | 'saved' | { error: string };
@@ -162,7 +173,7 @@ function PriceGridSection() {
             Grille des prix ({filtered.length}/{products.length})
           </h2>
           <p className="text-xs text-slate-400">
-            Prix standard, prix plancher et coût d'achat éditables. La sauvegarde se déclenche en quittant la
+            Prix standard, prix plancher et coût d&apos;achat éditables. La sauvegarde se déclenche en quittant la
             case.
           </p>
         </div>
@@ -197,11 +208,12 @@ function PriceGridSection() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                <th className="py-2.5 pr-3">Photo</th>
                 <th className="py-2.5 pr-3">Produit</th>
                 <th className="py-2.5 px-3">Catégorie</th>
                 <th className="py-2.5 px-3 text-right">Prix standard</th>
                 <th className="py-2.5 px-3 text-right">Prix plancher</th>
-                <th className="py-2.5 px-3 text-right">Coût d'achat</th>
+                <th className="py-2.5 px-3 text-right">Coût d&apos;achat</th>
                 <th className="py-2.5 px-3 text-right">Marge %</th>
               </tr>
             </thead>
@@ -220,6 +232,16 @@ function PriceGridSection() {
                     key={p.id}
                     className={incoherent ? 'bg-rose-500/10' : 'hover:bg-slate-800/40'}
                   >
+                    <td className="py-2.5 pr-3">
+                      <ProductPhotoCell
+                        product={p}
+                        onChange={(photoUrl) =>
+                          setProducts((prev) =>
+                            prev.map((row) => (row.id === p.id ? { ...row, photo_url: photoUrl } : row)),
+                          )
+                        }
+                      />
+                    </td>
                     <td className="py-2.5 pr-3">
                       <div className="font-semibold text-slate-100">{p.name}</div>
                       <div className="text-[10px] font-mono text-slate-500">{p.sku}</div>
@@ -267,6 +289,87 @@ function PriceGridSection() {
         </div>
       )}
     </section>
+  );
+}
+
+function ProductPhotoCell({
+  product,
+  onChange,
+}: {
+  product: PosProduct;
+  onChange: (photoUrl: string | null) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const inputId = `product-photo-${product.id}`;
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const photoUrl = await uploadProductPhoto(product.id, file);
+      onChange(photoUrl);
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    setUploading(true);
+    try {
+      await removeProductPhoto(product.id);
+      onChange(null);
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <label
+        htmlFor={inputId}
+        className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-700 bg-slate-800 text-[11px] font-bold text-slate-300 hover:border-[#D4AF37]"
+        title="Déposer une photo"
+      >
+        {product.photo_url ? (
+          // Photo hébergée sur Supabase Storage (URL dynamique) : <img> classique,
+          // pas de next/image (domaine non connu à la compilation).
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={product.photo_url} alt={product.name} className="h-full w-full object-cover" />
+        ) : (
+          productInitials(product.name)
+        )}
+        {uploading && (
+          <span className="absolute inset-0 flex items-center justify-center bg-black/60">
+            <Loader2 className="h-4 w-4 animate-spin text-white" />
+          </span>
+        )}
+      </label>
+      <input
+        id={inputId}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        disabled={uploading}
+        onChange={(e) => {
+          void handleFile(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
+      {product.photo_url && (
+        <button
+          type="button"
+          onClick={handleRemove}
+          disabled={uploading}
+          className="text-[10px] font-semibold text-slate-500 hover:text-rose-300 disabled:opacity-40"
+        >
+          Retirer
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -494,7 +597,7 @@ function PromotionsSection() {
           </div>
           <div>
             <label className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-slate-400">
-              Limite d'usage (0 = illimité)
+              Limite d&apos;usage (0 = illimité)
             </label>
             <Input
               type="number"

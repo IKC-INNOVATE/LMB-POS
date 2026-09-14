@@ -6,6 +6,7 @@ import {
   parseJson,
   parseNumber,
   resolveUnitCost,
+  type RawRecord,
 } from '@/lib/services/cost';
 
 // =====================================================================
@@ -94,19 +95,19 @@ const emptyMetrics = (store: StoreKey): StoreComparisonMetrics & {
   _estimatedBasisRevenue: 0,
 });
 
-const getSaleTotal = (sale: any): number =>
+const getSaleTotal = (sale: RawRecord): number =>
   parseNumber(sale?.total_amount_xof ?? sale?.total_amount ?? sale?.totalAmountXof ?? sale?.amount ?? sale?.total);
 
-const getSaleItems = (sale: any): any[] => {
+const getSaleItems = (sale: RawRecord): RawRecord[] => {
   const fromJson = parseJson(sale?.items_json);
   if (Array.isArray(fromJson)) return fromJson;
-  const metadata = parseJson(sale?.metadata);
+  const metadata = parseJson(sale?.metadata) as RawRecord | null;
   if (Array.isArray(metadata?.items)) return metadata.items;
-  if (Array.isArray(sale?.items)) return sale.items;
+  if (Array.isArray(sale?.items)) return sale.items as RawRecord[];
   return [];
 };
 
-const getItemLineRevenue = (item: any): number => {
+const getItemLineRevenue = (item: RawRecord): number => {
   const total = parseNumber(item?.total_price_xof ?? item?.total_xof ?? item?.line_total_xof);
   if (total > 0) return total;
   return getItemSellingPrice(item) * parseNumber(item?.quantity ?? 1);
@@ -145,9 +146,9 @@ export async function getStoreComparison(
     );
   }
 
-  const sales = (salesResult.data ?? []) as any[];
-  const expenses = (expensesResult.data ?? []) as any[];
-  const costByKey = buildCostByKey(productsResult.data as any[] | null);
+  const sales = (salesResult.data ?? []) as RawRecord[];
+  const expenses = (expensesResult.data ?? []) as RawRecord[];
+  const costByKey = buildCostByKey(productsResult.data as RawRecord[] | null);
 
   const buckets: Record<StoreKey, ReturnType<typeof emptyMetrics>> = {
     DAKAR: emptyMetrics('DAKAR'),
@@ -181,15 +182,16 @@ export async function getStoreComparison(
       let itemCost = 0;
       let saleHasEstimate = false;
 
-      items.forEach((item: any) => {
+      items.forEach((item: RawRecord) => {
         const quantity = parseNumber(item?.quantity ?? 1);
         const { cost, estimated } = resolveUnitCost(item, costByKey);
         itemCost += quantity * cost;
         if (estimated) saleHasEstimate = true;
 
         // Agrégation top produits (nom prioritaire, sinon sku).
-        const name = String(item?.name ?? item?.product_name ?? item?.product?.name ?? '').trim();
-        const sku = item?.sku ?? item?.product?.sku ?? item?.product_id ?? null;
+        const product = item?.product as RawRecord | undefined;
+        const name = String(item?.name ?? item?.product_name ?? product?.name ?? '').trim();
+        const sku = item?.sku ?? product?.sku ?? item?.product_id ?? null;
         const key = (name || String(sku ?? '') || 'Produit inconnu').toLowerCase();
         const entry = topAgg[store].get(key) ?? {
           name: name || String(sku ?? 'Produit inconnu'),
@@ -243,10 +245,20 @@ export async function getStoreComparison(
       .slice(0, 10);
   });
 
-  const strip = (b: ReturnType<typeof emptyMetrics>): StoreComparisonMetrics => {
-    const { _estimatedBasisRevenue, ...rest } = b;
-    return rest;
-  };
+  const strip = (b: ReturnType<typeof emptyMetrics>): StoreComparisonMetrics => ({
+    store: b.store,
+    totalRevenue: b.totalRevenue,
+    salesCount: b.salesCount,
+    averageBasket: b.averageBasket,
+    costOfGoodsSold: b.costOfGoodsSold,
+    grossMargin: b.grossMargin,
+    grossMarginRate: b.grossMarginRate,
+    grossMarginIsEstimated: b.grossMarginIsEstimated,
+    estimatedRevenueShare: b.estimatedRevenueShare,
+    totalExpenses: b.totalExpenses,
+    netResult: b.netResult,
+    topProducts: b.topProducts,
+  });
 
   return {
     startDate: safeStart,

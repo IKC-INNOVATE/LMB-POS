@@ -60,7 +60,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-400">
-        Vérification de l'accès…
+        Vérification de l&apos;accès…
       </div>
     );
   }

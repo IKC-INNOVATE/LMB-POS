@@ -9,7 +9,6 @@ import {
   saveAuditDraft,
   startInventoryAudit,
   type InventoryAudit,
-  type InventoryAuditItem,
   type InventoryLocation,
 } from '@/lib/services/audits';
 import Input from '@/components/ui/Input';

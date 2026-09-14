@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
-import { closeRegister, getOpenRegister } from '@/lib/services/register';
+import { closeRegister, getOpenRegister, type CloseRegisterReport } from '@/lib/services/register';
 
 export default function CloseRegisterButton({
   storeCode,
@@ -17,7 +17,7 @@ export default function CloseRegisterButton({
   const [open, setOpen] = useState(false);
   const [countedCash, setCountedCash] = useState('0');
   const [notes, setNotes] = useState('');
-  const [report, setReport] = useState<any | null>(null);
+  const [report, setReport] = useState<CloseRegisterReport | null>(null);
   const [loading, setLoading] = useState(false);
 
   const calculatePreview = async () => {
@@ -37,8 +37,8 @@ export default function CloseRegisterButton({
       } catch (e) {
         console.warn('onSuccess callback failed', e);
       }
-    } catch (err: any) {
-      alert(String(err?.message ?? err));
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export default function CloseRegisterButton({
         onClick={async () => {
           try {
             await calculatePreview();
-          } catch (err: any) {
+          } catch (err) {
             // Prévisualisation indisponible (réseau) : on ouvre quand même la
             // modale, la clôture elle-même signalera toute erreur réelle.
             console.warn('calculatePreview failed', err);
@@ -93,12 +93,12 @@ export default function CloseRegisterButton({
             <h3 className="text-lg font-bold text-[#111111]">Clôture de caisse (Billetage)</h3>
             <div className="mt-4 space-y-3 text-sm text-[#111111]">
               <div>
-                <label className="mb-1 block font-medium">Espèces comptées</label>
-                <input type="number" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} className="w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
+                <label htmlFor="close-register-counted-cash" className="mb-1 block font-medium">Espèces comptées</label>
+                <input id="close-register-counted-cash" type="number" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} className="w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
               </div>
               <div>
-                <label className="mb-1 block font-medium">Notes</label>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[90px] w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
+                <label htmlFor="close-register-notes" className="mb-1 block font-medium">Notes</label>
+                <textarea id="close-register-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[90px] w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
               </div>
             </div>
             <div className="mt-5 flex flex-wrap justify-end gap-2">

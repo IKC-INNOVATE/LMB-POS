@@ -36,8 +36,8 @@ export default function CashExpenseButton({
       } catch (e) {
         console.warn('onSuccess callback failed', e);
       }
-    } catch (err: any) {
-      alert(String(err?.message ?? err));
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
     } finally {
       setLoading(false);
     }
@@ -55,12 +55,12 @@ export default function CashExpenseButton({
             <h3 className="text-lg font-bold text-[#111111]">Sortie de caisse</h3>
             <div className="mt-4 space-y-3 text-sm text-[#111111]">
               <div>
-                <label className="mb-1 block font-medium">Montant</label>
-                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
+                <label htmlFor="cash-expense-amount" className="mb-1 block font-medium">Montant</label>
+                <input id="cash-expense-amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
               </div>
               <div>
-                <label className="mb-1 block font-medium">Motif</label>
-                <input value={reason} onChange={(e) => setReason(e.target.value)} className="w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
+                <label htmlFor="cash-expense-reason" className="mb-1 block font-medium">Motif</label>
+                <input id="cash-expense-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">

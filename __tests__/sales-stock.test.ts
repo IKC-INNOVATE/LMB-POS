@@ -7,8 +7,7 @@ vi.mock('@/lib/supabase', () => ({
 
 async function loadServiceWithMocks(rpcMock: ReturnType<typeof vi.fn>, fromMock?: ReturnType<typeof vi.fn>) {
   const { supabase } = await import('@/lib/supabase');
-  (supabase as any).rpc = rpcMock;
-  (supabase as any).from = fromMock ?? queueSupabaseFrom([]);
+  Object.assign(supabase, { rpc: rpcMock, from: fromMock ?? queueSupabaseFrom([]) });
   return import('@/lib/services/sales');
 }
 

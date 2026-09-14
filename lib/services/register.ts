@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-const sanitizeForSupabase = <T extends Record<string, any>>(data: T) =>
+const sanitizeForSupabase = <T extends Record<string, unknown>>(data: T) =>
   Object.fromEntries(
     Object.entries(data).filter(([, value]) => value !== undefined)
   ) as T;
@@ -99,7 +99,19 @@ export async function addCashExpense(amount: number, reason: string, cashier_nam
   return data as RegisterExpense;
 }
 
-export async function closeRegister(counted_cash: number, notes?: string, store_code?: string) {
+export interface CloseRegisterReport {
+  register: RegisterSession;
+  total_cash_sales: number;
+  total_expenses: number;
+  theoretical_cash: number;
+  variance: number;
+}
+
+export async function closeRegister(
+  counted_cash: number,
+  notes?: string,
+  store_code?: string,
+): Promise<CloseRegisterReport> {
   const now = new Date().toISOString();
   const register = await findOpenRegister(store_code);
   if (!register) throw new Error('No open register to close');
@@ -121,7 +133,7 @@ export async function closeRegister(counted_cash: number, notes?: string, store_
   if (salesRes.error) {
     throw new Error(`Clôture impossible : lecture des ventes espèces échouée (${salesRes.error.message}).`);
   }
-  const sales = (salesRes.data as Array<any>) || [];
+  const sales = (salesRes.data as Array<{ total_amount_xof?: number }>) || [];
   const total_cash_sales = sales.reduce((s, r) => s + Number(r.total_amount_xof ?? 0), 0);
 
   // Sum expenses for this register
@@ -132,7 +144,7 @@ export async function closeRegister(counted_cash: number, notes?: string, store_
   if (expRes.error) {
     throw new Error(`Clôture impossible : lecture des sorties de caisse échouée (${expRes.error.message}).`);
   }
-  const exps = (expRes.data as Array<any>) || [];
+  const exps = (expRes.data as Array<{ amount?: number }>) || [];
   const total_expenses = exps.reduce((s, r) => s + Number(r.amount ?? 0), 0);
 
   const theoretical_cash = Number(register.initial_cash ?? 0) + Number(total_cash_sales ?? 0) - Number(total_expenses ?? 0);

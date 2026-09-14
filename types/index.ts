@@ -33,6 +33,8 @@ export interface Product {
   cost_price_xof?: number;
   stock_dakar: number;
   stock_abidjan: number;
+  /** URL publique de la photo (bucket Storage "product-photos"). Null/absent = pas de photo. */
+  photo_url?: string | null;
 }
 
 export interface CartItem {
@@ -55,7 +57,7 @@ export interface Customer {
   total_orders?: number;
   last_purchase_at?: string | null;
   // `notes` (jsonb) : les notes esthétiques libres vivent sous la clé `beauty`.
-  notes?: Record<string, any> | null;
+  notes?: Record<string, unknown> | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -71,7 +73,7 @@ export interface CustomerOrder {
   points_redeemed?: number;
   payment_method?: string;
   created_at?: string;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface LoyaltyEvent {
@@ -82,7 +84,7 @@ export interface LoyaltyEvent {
   reason?: string | null;
   related_order_id?: string | null;
   created_at?: string;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface ReceiptItem {
@@ -110,7 +112,7 @@ export interface ReceiptData {
   totalXof: number;
   paymentMethod: string;
   paymentReference?: string;
-  paymentDetails?: any;
+  paymentDetails?: Record<string, unknown> | null;
   notes?: string;
 }
 
@@ -129,7 +131,7 @@ export interface SaleReceipt {
   points_earned?: number;
   customer_id?: string | null;
   items?: CartItem[];
-  items_json?: any[];
+  items_json?: Record<string, unknown>[];
   totalAmountXof?: number;
   total_amount_xof?: number | string;
   totalDiscountXof?: number;
@@ -141,4 +143,5 @@ export interface SaleReceipt {
   subtotal_xof?: number;
   discount_xof?: number;
   payment_reference?: string;
+  store_code?: string;
 }

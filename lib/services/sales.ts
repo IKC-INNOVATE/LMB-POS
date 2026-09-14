@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { ReceiptData, ReceiptItem, SaleReceipt } from '@/types';
 
-const sanitizeForSupabase = <T extends Record<string, any>>(data: T) =>
+const sanitizeForSupabase = <T extends Record<string, unknown>>(data: T) =>
   Object.fromEntries(
     Object.entries(data).filter(([, value]) => value !== undefined)
   ) as T;
@@ -48,7 +48,7 @@ export async function createSaleWithCustomer(payload: {
   subtotal_xof?: number;
   discount_xof?: number;
   total_xof?: number;
-  payment_details?: any;
+  payment_details?: Record<string, unknown> | null;
   notes?: string;
 }): Promise<{ sale: SaleReceipt; receipt: ReceiptData }> {
   const now = new Date().toISOString();

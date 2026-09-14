@@ -45,7 +45,7 @@ export interface TransferRow {
   created_by?: string | null;
   created_at?: string;
   confirmed_at?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
   // Miroirs du format canonique historique (facultatifs).
   source_location?: Location;
   destination_location?: Location;
@@ -65,7 +65,7 @@ export interface TransferGroup {
   created_by?: string | null;
   created_at?: string;
   confirmed_at?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
   lines: Array<{
     id?: string;
     productId: string;
@@ -84,7 +84,16 @@ const stockColumnFor = (location: string): string => {
   throw new Error(`Emplacement de stock inconnu : "${location}". Attendu DAKAR, ABIDJAN ou RESERVE.`);
 };
 
-const normalizeItem = (raw: any): TransferItem => ({
+interface RawTransferItem {
+  productId?: string;
+  product_id?: string;
+  id?: string;
+  qty?: number;
+  quantity?: number;
+  quantity_sent?: number;
+}
+
+const normalizeItem = (raw: RawTransferItem): TransferItem => ({
   productId: String(raw?.productId ?? raw?.product_id ?? raw?.id ?? ''),
   qty: Number(raw?.qty ?? raw?.quantity ?? raw?.quantity_sent ?? 0),
 });
@@ -112,7 +121,12 @@ const CANONICAL_STATUS = (raw?: string): 'PENDING' | 'CONFIRMED' | 'CANCELLED' =
  * `confirmTransfer(transfer_number)`.
  * Aucun fallback silencieux : succès réel (lignes renvoyées par la base) ou throw.
  */
-export async function createTransfer(from: Location, to: Location, items: TransferItem[], metadata?: any) {
+export async function createTransfer(
+  from: Location,
+  to: Location,
+  items: TransferItem[],
+  metadata?: Record<string, unknown>
+) {
   const now = new Date().toISOString();
   const fromCity = String(from).toUpperCase() as Location;
   const toCity = String(to).toUpperCase() as Location;
@@ -148,7 +162,12 @@ export async function createTransfer(from: Location, to: Location, items: Transf
   if (prodErr) {
     throw new Error(`Transfert NON enregistré : lecture des produits échouée (${prodErr.message}).`);
   }
-  const prodById = new Map((prodRows ?? []).map((p: any) => [String(p.id), p]));
+  interface ProductRow {
+    id: string;
+    sku?: string;
+    name?: string;
+  }
+  const prodById = new Map((prodRows ?? []).map((p: ProductRow) => [String(p.id), p]));
   const missing = productIds.filter((id) => !prodById.has(id));
   if (missing.length > 0) {
     throw new Error(`Transfert NON enregistré : produit(s) introuvable(s) en base : ${missing.join(', ')}.`);
@@ -161,7 +180,7 @@ export async function createTransfer(from: Location, to: Location, items: Transf
   const createdBy = metadata?.createdBy ?? metadata?.created_by ?? null;
 
   const rows = productIds.map((productId, idx) => {
-    const p: any = prodById.get(productId);
+    const p = prodById.get(productId)!;
     const qty = merged.get(productId)!;
     return {
       ref_number: `${groupNumber}-L${idx + 1}`, // UNIQUE par ligne (contrainte)
@@ -258,12 +277,33 @@ export async function listTransfers(limit = 100): Promise<TransferGroup[]> {
     throw new Error(`Impossible de charger les transferts : ${error.message}`);
   }
 
-  const rows = (data ?? []) as any[];
+  interface RawTransferRow {
+    id?: string;
+    transfer_number?: string;
+    ref_number?: string;
+    product_id?: string;
+    product_sku?: string;
+    product_name?: string;
+    quantity?: number;
+    items?: Array<{ productId?: string; qty?: number }>;
+    status?: string;
+    from_city?: Location;
+    to_city?: Location;
+    source_location?: Location;
+    destination_location?: Location;
+    carrier?: string | null;
+    created_by?: string | null;
+    created_at?: string;
+    confirmed_at?: string | null;
+    metadata?: Record<string, unknown> & { carrier?: string } | null;
+  }
+
+  const rows = (data ?? []) as RawTransferRow[];
   const groups = new Map<string, TransferGroup>();
 
   for (const r of rows) {
     // Regroupement par transfer_number (ref_number est unique par ligne).
-    const key = r.transfer_number ?? r.ref_number ?? r.id;
+    const key = r.transfer_number ?? r.ref_number ?? r.id ?? '';
     const canonical = CANONICAL_STATUS(r.status);
     const line = {
       id: r.id,
