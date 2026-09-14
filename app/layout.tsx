@@ -6,6 +6,17 @@ import ThemeProvider from '../components/theme/ThemeProvider';
 export const metadata = {
   title: 'Luxury Magic Butter • ERP & POS',
   description: 'Système ERP & POS Multi-Boutiques Dakar & Abidjan',
+  // Outil interne (caisse, comptes employés) : ne doit jamais être indexé par
+  // les moteurs de recherche. Voir aussi public/robots.txt.
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
 };
 
 export default function RootLayout({

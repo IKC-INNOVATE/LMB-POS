@@ -92,6 +92,62 @@ describe('closeRegister — calcul du solde théorique et de l’écart', () => 
 
     await expect(closeRegister(48_000, undefined, 'DAKAR')).rejects.toThrow(/Clôture impossible/i);
   });
+
+  // Régression : avant correction, un acompte (payment_method réécrit en
+  // 'PARTIAL_PAYMENT') disparaissait entièrement du calcul, et la part espèces
+  // d'un paiement mixte (SPLIT) n'était jamais comptée non plus.
+  it('inclut le montant réellement versé (pas le total de la vente) pour un acompte payé en espèces', async () => {
+    const from = queueSupabaseFrom([
+      { data: [openRegisterRow], error: null },
+      {
+        data: [
+          {
+            total_amount_xof: 40_000,
+            payment_method: 'ESPECES',
+            metadata: { payment_details: { isDeposit: 1, paid: 15_000, balance: 25_000 } },
+          },
+        ],
+        error: null,
+      },
+      { data: [], error: null }, // aucune sortie de caisse
+      { data: { ...openRegisterRow, status: 'CLOSED' }, error: null },
+    ]);
+    const { closeRegister } = await loadServiceWithFrom(from);
+
+    const result = await closeRegister(35_000, undefined, 'DAKAR');
+
+    // 20 000 (fond initial) + 15 000 (acompte réellement versé, PAS les 40 000
+    // du total de la vente) - 0 = 35 000
+    expect(result.total_cash_sales).toBe(15_000);
+    expect(result.theoretical_cash).toBe(35_000);
+    expect(result.variance).toBe(0);
+  });
+
+  it('inclut la part espèces d’une vente en paiement mixte (SPLIT)', async () => {
+    const from = queueSupabaseFrom([
+      { data: [openRegisterRow], error: null },
+      {
+        data: [
+          {
+            total_amount_xof: 10_000,
+            payment_method: 'SPLIT',
+            metadata: { payment_details: { cash: 4_000, WAVE: 6_000 } },
+          },
+        ],
+        error: null,
+      },
+      { data: [], error: null },
+      { data: { ...openRegisterRow, status: 'CLOSED' }, error: null },
+    ]);
+    const { closeRegister } = await loadServiceWithFrom(from);
+
+    const result = await closeRegister(24_000, undefined, 'DAKAR');
+
+    // 20 000 + 4 000 (seule la jambe espèces du paiement mixte) = 24 000
+    expect(result.total_cash_sales).toBe(4_000);
+    expect(result.theoretical_cash).toBe(24_000);
+    expect(result.variance).toBe(0);
+  });
 });
 
 describe('openRegister — anti-doublon par boutique', () => {

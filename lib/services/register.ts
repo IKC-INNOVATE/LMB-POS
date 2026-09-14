@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { parseJson, parseNumber } from '@/lib/services/cost';
 
 const sanitizeForSupabase = <T extends Record<string, unknown>>(data: T) =>
   Object.fromEntries(
@@ -122,19 +123,46 @@ export async function closeRegister(
   // Schéma réel de `lmb_sales` (table legacy, sans migration de création — documenté
   // en Tâche 1.2) : le montant total est `total_amount_xof`, la boutique est
   // `store_name`, et le mode de paiement espèces vaut littéralement 'ESPECES'.
+  //
+  // On inclut aussi les ventes 'SPLIT' (paiement mixte) : leur part réellement
+  // encaissée en espèces (metadata.payment_details.cash) doit compter dans le
+  // fond de caisse théorique, alors qu'avant cette correction elle était
+  // purement et simplement ignorée (seul payment_method === 'ESPECES' était lu).
+  //
+  // Cas particulier d'un acompte payé en espèces (payment_method === 'ESPECES'
+  // ET metadata.payment_details.isDeposit === 1) : total_amount_xof porte le
+  // montant TOTAL de la vente (prix plein), pas la somme réellement remise en
+  // espèces aujourd'hui — seul metadata.payment_details.paid l'est. On utilise
+  // donc ce montant précis pour ces ventes-là, jamais le total de la vente.
   const salesRes = await supabase
     .from('lmb_sales')
-    .select('total_amount_xof,created_at')
+    .select('total_amount_xof,payment_method,metadata,created_at')
     .eq('store_name', register.store_code)
     .gte('created_at', register.opened_at)
     .lte('created_at', now)
-    .eq('payment_method', 'ESPECES');
+    .in('payment_method', ['ESPECES', 'SPLIT']);
 
   if (salesRes.error) {
     throw new Error(`Clôture impossible : lecture des ventes espèces échouée (${salesRes.error.message}).`);
   }
-  const sales = (salesRes.data as Array<{ total_amount_xof?: number }>) || [];
-  const total_cash_sales = sales.reduce((s, r) => s + Number(r.total_amount_xof ?? 0), 0);
+  const sales = (salesRes.data as Array<{ total_amount_xof?: number; payment_method?: string; metadata?: unknown }>) || [];
+  const total_cash_sales = sales.reduce((sum, r) => {
+    const meta = parseJson(r.metadata);
+    const details = meta && typeof meta === 'object' ? (meta as Record<string, unknown>).payment_details : null;
+    const detailsObj = details && typeof details === 'object' ? (details as Record<string, unknown>) : null;
+
+    if (r.payment_method === 'SPLIT') {
+      // Seule la jambe espèces du paiement mixte est du liquide réel en caisse.
+      return sum + (detailsObj ? parseNumber(detailsObj.cash) : 0);
+    }
+
+    // payment_method === 'ESPECES'
+    const isDeposit = detailsObj && Number(detailsObj.isDeposit ?? 0) === 1;
+    if (isDeposit) {
+      return sum + parseNumber(detailsObj!.paid);
+    }
+    return sum + parseNumber(r.total_amount_xof);
+  }, 0);
 
   // Sum expenses for this register
   const expRes = await supabase

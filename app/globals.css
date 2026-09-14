@@ -172,3 +172,29 @@ html.light .bg-\[\#111111\] {
 html.light .bg-\[\#1A1A1A\] {
   background-color: #FFFFFF;
 }
+
+/* ===== Lisibilité globale : icônes natives des champs date/heure/nombre =====
+   Sans cette propriété CSS, le navigateur choisit lui-même la couleur des
+   éléments natifs non stylables directement (icône du calendrier, flèches
+   +/- des champs numériques, fenêtre du sélecteur de date) selon le thème
+   du système d'exploitation — indépendamment des couleurs choisies dans
+   l'application. Résultat concret signalé par l'utilisateur : sur nos
+   champs à fond sombre (Comparatif Dakar/Abidjan, Grille tarifaire, RH,
+   Comptes marchands, etc. — l'immense majorité de l'application), ces
+   icônes se dessinaient sombres sur fond sombre et devenaient invisibles,
+   rendant la saisie des dates et des chiffres difficile.
+   On force donc un rendu adapté à un fond sombre par défaut, cohérent avec
+   le style utilisé partout dans l'app pour ces champs. Les quelques champs
+   volontairement à fond blanc (modales de la Caisse : sortie de caisse,
+   clôture, ouverture de caisse, inventaire physique) redéfinissent déjà
+   color-scheme:'light' directement en style inline sur l'élément, qui reste
+   prioritaire sur cette règle globale et n'est donc pas affecté. */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"],
+input[type="number"] {
+  color-scheme: dark;
+}
+

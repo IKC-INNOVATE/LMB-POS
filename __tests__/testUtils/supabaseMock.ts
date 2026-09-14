@@ -29,7 +29,7 @@ export function queueSupabaseFrom(results: Array<SupabaseResult>) {
 function makeBuilder(result: SupabaseResult): MockBuilder {
   const builder: MockBuilder = {};
   const chainMethods = [
-    'select', 'eq', 'order', 'limit', 'gte', 'lte', 'or', 'insert', 'update', 'delete',
+    'select', 'eq', 'in', 'order', 'limit', 'gte', 'lte', 'or', 'insert', 'update', 'delete',
   ];
   chainMethods.forEach((method) => {
     builder[method] = vi.fn(() => builder);

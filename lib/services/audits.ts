@@ -204,3 +204,61 @@ export async function completeInventoryAudit(auditId: string): Promise<Inventory
   if (completeError) throw completeError;
   return completed as InventoryAudit;
 }
+
+
+// =====================================================================
+// Inventaire physique transmis depuis la Caisse (POS), par une caissière.
+// -----------------------------------------------------------------------
+// À NE PAS CONFONDRE avec l'outil ci-dessus (lmb_inventory_audits) : celui-ci
+// est réservé à la Direction/GÉRANT et corrige le stock automatiquement à la
+// validation. Ce qui suit alimente une table séparée (`inventory_reports`,
+// affichée dans le tableau de bord Direction, onglet "Rapports d'Inventaires
+// Physiques") qui reste VOLONTAIREMENT PUREMENT INFORMATIVE : transmettre un
+// comptage ici ne modifie jamais le stock officiel. C'est un rapport que la
+// Direction consulte, et corrige elle-même via l'outil ci-dessus si besoin —
+// pour éviter qu'une caissière seule puisse altérer les niveaux de stock
+// officiels sans validation.
+// =====================================================================
+
+export interface PhysicalInventoryReportItem {
+  sku: string;
+  name: string;
+  theoretical: number;
+  physical: number;
+  discrepancy: number;
+}
+
+export interface PhysicalInventoryReportInput {
+  locationCountry: string;
+  cashierName: string;
+  items: PhysicalInventoryReportItem[];
+}
+
+export async function submitPhysicalInventoryReport(
+  input: PhysicalInventoryReportInput,
+): Promise<{ id: string; net_variance: number; status: string }> {
+  const items = input.items ?? [];
+  const totalExpected = items.reduce((sum, item) => sum + Number(item.theoretical ?? 0), 0);
+  const totalCounted = items.reduce((sum, item) => sum + Number(item.physical ?? 0), 0);
+  const netVariance = totalCounted - totalExpected;
+
+  const payload = {
+    cashier_name: input.cashierName || 'Caissière',
+    location_country: input.locationCountry,
+    total_expected: totalExpected,
+    total_counted: totalCounted,
+    net_variance: netVariance,
+    status: netVariance === 0 ? 'CONFORME' : 'ANOMALIE',
+    details: items,
+    created_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from('inventory_reports')
+    .insert([payload])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as { id: string; net_variance: number; status: string };
+}

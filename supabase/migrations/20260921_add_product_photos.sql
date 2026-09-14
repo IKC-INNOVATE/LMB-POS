@@ -66,8 +66,15 @@ ON CONFLICT (id) DO UPDATE SET
 -- 3. Policies RLS sur storage.objects, limitées à ce bucket
 --    (nécessite les fonctions public.current_staff_role() créées par
 --    20260919_role_helper_functions.sql)
+--
+--    NB : pas de ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY ici.
+--    Cette table appartient à Supabase (compte technique interne), pas à
+--    votre compte : la RLS y est déjà activée par défaut sur tous les
+--    projets Supabase, et tenter de la réactiver soi-même échoue avec
+--    l'erreur "must be owner of table objects". Créer des policies dessus
+--    (ce que fait le reste de ce bloc), en revanche, est une opération
+--    normale et autorisée.
 -- ---------------------------------------------------------------------
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "product_photos_public_read" ON storage.objects;
 CREATE POLICY "product_photos_public_read"

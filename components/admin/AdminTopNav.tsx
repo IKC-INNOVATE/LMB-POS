@@ -21,11 +21,12 @@ export default function AdminTopNav() {
     }
   };
 
+  // "CRM CLIENTS VIP" et "CLIENTS & FIDÉLITÉ" pointaient toutes les deux vers
+  // /admin/customers (doublon involontaire) : fusionnées en une seule entrée.
   const tabs = [
     { href: "/admin", label: "LMBS" },
     { href: "/admin/customers", label: "CRM CLIENTS VIP" },
     { href: "/admin/purchases", label: "ACHATS & FOURNISSEURS" },
-    { href: "/admin/customers", label: "CLIENTS & FIDÉLITÉ" },
     { href: "/admin/promotions", label: "PROMOTIONS & OFFRES" },
     { href: "/admin/finance", label: "COMPTABILITÉ & FINANCE" },
     { href: "/admin/audits", label: "INVENTAIRES & AUDITS" },
@@ -34,10 +35,10 @@ export default function AdminTopNav() {
   return (
     <div className="border-b border-gray-800 bg-[#111111] sticky top-0 z-40">
       <div className="max-w-[1600px] mx-auto px-4 py-2 flex items-center gap-2">
-        <nav className="flex items-center gap-2 flex-1 flex-wrap overflow-x-auto">
+        <nav className="flex items-center gap-2 flex-1 flex-nowrap overflow-x-auto">
           {tabs.map((t) => {
             const isActive = pathname === t.href || pathname.startsWith(t.href + "/");
-            const base = "text-white font-semibold text-xs tracking-wider uppercase";
+            const base = "text-white font-semibold text-xs tracking-wider uppercase whitespace-nowrap flex-shrink-0";
             const hover = "hover:text-[#D4AF37] hover:bg-[#222222] px-3 py-1.5 rounded transition";
             const active = "bg-[#222222] text-[#D4AF37] border border-[#D4AF37]/40 px-3 py-1.5 rounded";
 

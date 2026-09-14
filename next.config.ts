@@ -29,6 +29,15 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  {
+    // Force le navigateur à toujours utiliser une connexion sécurisée
+    // (https) vers ce domaine pendant 1 an, même si quelqu'un tape
+    // l'adresse sans le "s" ou clique un vieux lien en http. Protège
+    // contre les attaques d'interception sur réseau non fiable (ex. wifi
+    // public). includeSubDomains couvre aussi les éventuels sous-domaines.
+    key: "Strict-Transport-Security",
+    value: "max-age=31536000; includeSubDomains",
+  },
 ];
 
 const nextConfig: NextConfig = {

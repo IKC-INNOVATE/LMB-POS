@@ -97,6 +97,14 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
   const vipStatus = receipt.vipStatus ?? receipt.customer?.vip_status ?? 'STANDARD';
   const pointsBalance = receipt.pointsBalance ?? Number(receipt.customer?.loyalty_points ?? 0);
 
+  // Un acompte se reconnaît soit à l'ancien marqueur historique
+  // 'PARTIAL_PAYMENT' (ventes enregistrées avant cette correction, où le
+  // canal réel de paiement était écrasé), soit — pour les ventes récentes,
+  // qui conservent désormais le vrai canal (ESPECES/CB/WAVE/OM/SPLIT) — au
+  // marqueur payment_details.isDeposit.
+  const isDepositReceipt =
+    receipt.paymentMethod === 'PARTIAL_PAYMENT' || Number(receipt.paymentDetails?.isDeposit ?? 0) === 1;
+
   const handleDownloadPdf = () => {
     const doc = new jsPDF({ unit: 'mm', format: [80, 220] });
     const margin = 5;
@@ -154,7 +162,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
         doc.text(`Espèces: ${fmtPdf(Number(cash))} FCFA`, margin, y);
         y += lineHeight;
         doc.text(`${otherKey}: ${fmtPdf(Number(otherVal))} FCFA`, margin, y);
-      } else if (receipt.paymentMethod === 'PARTIAL_PAYMENT') {
+      } else if (isDepositReceipt) {
         const paid = Number(pd.paid ?? 0);
         const balance = Number(pd.balance ?? Math.max(0, receipt.totalXof - paid));
         doc.text(`Acompte versé: ${fmtPdf(Number(paid))} FCFA`, margin, y);
@@ -289,7 +297,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
                 </div>
               )}
 
-              {receipt.paymentDetails && receipt.paymentMethod === 'PARTIAL_PAYMENT' && (
+              {receipt.paymentDetails && isDepositReceipt && (
                 <div className="mt-2 text-sm text-slate-200">
                   <div>Acompte versé : {Number(receipt.paymentDetails.paid ?? 0).toLocaleString('fr-FR')} FCFA</div>
                   <div>Solde restant à payer : {Number(receipt.paymentDetails.balance ?? Math.max(0, receipt.totalXof - Number(receipt.paymentDetails.paid ?? 0))).toLocaleString('fr-FR')} FCFA</div>
@@ -420,7 +428,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
               ))}
             </div>
           )}
-          {receipt.paymentDetails && receipt.paymentMethod === 'PARTIAL_PAYMENT' && (
+          {receipt.paymentDetails && isDepositReceipt && (
             <div style={{ marginTop: '4px' }}>
               <div>Acompte versé: {Number(receipt.paymentDetails.paid ?? 0).toLocaleString('fr-FR')} FCFA</div>
               <div>Solde restant: {Number(receipt.paymentDetails.balance ?? Math.max(0, receipt.totalXof - Number(receipt.paymentDetails.paid ?? 0))).toLocaleString('fr-FR')} FCFA</div>

@@ -347,6 +347,23 @@ export interface ReconciliationResult {
 const getSaleTotal = (sale: RawRecord): number =>
   parseNumber(sale?.total_amount_xof ?? sale?.total_amount ?? sale?.amount ?? sale?.total);
 
+/**
+ * Montant RÉELLEMENT encaissé aujourd'hui sur le canal direct (Wave/OM) de
+ * cette vente. Pour une vente normale, c'est le total de la vente. Pour un
+ * acompte (metadata.payment_details.isDeposit === 1), total_amount_xof porte
+ * le prix TOTAL de la vente — pas la somme réellement reçue sur Wave/OM
+ * aujourd'hui, qui est metadata.payment_details.paid. Sans cette distinction,
+ * un acompte Wave/OM gonflerait artificiellement le total encaissé du jour du
+ * montant du solde restant, qui n'a pourtant pas encore été payé.
+ */
+const getSaleCollectedAmount = (sale: RawRecord): number => {
+  const meta = parseJson(sale?.metadata);
+  const details = meta && typeof meta === 'object' ? (meta as RawRecord).payment_details : null;
+  const detailsObj = details && typeof details === 'object' ? (details as RawRecord) : null;
+  const isDeposit = detailsObj && Number(detailsObj.isDeposit ?? 0) === 1;
+  return isDeposit ? parseNumber(detailsObj!.paid) : getSaleTotal(sale);
+};
+
 const getSaleRef = (sale: RawRecord): string =>
   String(sale?.receipt_number ?? sale?.id ?? '(sans référence)');
 
@@ -357,6 +374,12 @@ const getSaleRef = (sale: RawRecord): string =>
  * Renvoie null si la structure est inexploitable -> la vente ira dans
  * splitUnventilated (jamais imputée à une plateforme).
  */
+// Clés d'information sur un acompte (voir app/page.tsx) qui peuvent cohabiter
+// dans le même payment_details qu'une ventilation de paiement mixte — ce ne
+// sont PAS des jambes de paiement supplémentaires et doivent être ignorées
+// ici, sous peine de les voir classées comme jambes « non identifiées ».
+const DEPOSIT_INFO_KEYS = new Set(['isDeposit', 'paid', 'balance']);
+
 function splitLegs(sale: RawRecord): Array<{ cls: PaymentClass; amount: number }> | null {
   const meta = parseJson(sale?.metadata);
   const details = meta && typeof meta === 'object' ? (meta as RawRecord).payment_details : null;
@@ -365,6 +388,7 @@ function splitLegs(sale: RawRecord): Array<{ cls: PaymentClass; amount: number }
   const legs: Array<{ cls: PaymentClass; amount: number }> = [];
   let sawAny = false;
   for (const [label, value] of Object.entries(details)) {
+    if (DEPOSIT_INFO_KEYS.has(label)) continue;
     const amount = parseNumber(value);
     if (!(amount > 0)) continue;
     sawAny = true;
@@ -448,7 +472,7 @@ export async function getReconciliation(
 
     if (cls === 'WAVE' || cls === 'OM') {
       const bucket = acc.get(key(storeKey, cls))!;
-      bucket.directSalesXof += total;
+      bucket.directSalesXof += getSaleCollectedAmount(sale);
       bucket.directSalesCount += 1;
       continue;
     }

@@ -96,4 +96,28 @@ describe('ReceiptModal', () => {
     // côté composant (paymentDetails.balance non fourni ici).
     expect(screen.getAllByText(/6[\s ]500 FCFA/).length).toBeGreaterThan(0);
   });
+
+  it('affiche un acompte récent qui conserve son vrai canal de paiement (ex. Wave) via payment_details.isDeposit', () => {
+    render(
+      <ReceiptModal
+        isOpen={true}
+        onClose={vi.fn()}
+        receipt={{
+          ...baseReceipt,
+          totalXof: 11500,
+          // Depuis la correction : le moyen de paiement réel n'est plus
+          // remplacé par 'PARTIAL_PAYMENT' — seul payment_details.isDeposit
+          // signale qu'il s'agit d'un acompte.
+          paymentMethod: 'WAVE',
+          paymentDetails: { isDeposit: 1, paid: 5000, balance: 6500 },
+        }}
+      />,
+    );
+
+    // Le libellé du moyen de paiement réel reste visible...
+    expect(screen.getAllByText('Wave / Mobile').length).toBeGreaterThan(0);
+    // ...et le détail de l'acompte s'affiche quand même.
+    expect(screen.getAllByText(/5[\s ]000 FCFA/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/6[\s ]500 FCFA/).length).toBeGreaterThan(0);
+  });
 });

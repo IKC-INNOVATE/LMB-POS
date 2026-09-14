@@ -51,12 +51,12 @@ export default function CashExpenseButton({
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-[#D4AF37]/30 bg-[#F9F9FB] p-5 shadow-luxury">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-[#D4AF37]/30 bg-[#F9F9FB] p-5 shadow-luxury">
             <h3 className="text-lg font-bold text-[#111111]">Sortie de caisse</h3>
             <div className="mt-4 space-y-3 text-sm text-[#111111]">
               <div>
                 <label htmlFor="cash-expense-amount" className="mb-1 block font-medium">Montant</label>
-                <input id="cash-expense-amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
+                <input id="cash-expense-amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ colorScheme: 'light', backgroundColor: '#ffffff', color: '#111111' }} className="w-full rounded-xl border border-[#D4AF37]/25 px-3 py-2 outline-none focus:border-[#D4AF37]" />
               </div>
               <div>
                 <label htmlFor="cash-expense-reason" className="mb-1 block font-medium">Motif</label>

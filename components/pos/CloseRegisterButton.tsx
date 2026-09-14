@@ -89,16 +89,16 @@ export default function CloseRegisterButton({
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl border border-[#D4AF37]/30 bg-[#F9F9FB] p-5 shadow-luxury">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#D4AF37]/30 bg-[#F9F9FB] p-5 shadow-luxury">
             <h3 className="text-lg font-bold text-[#111111]">Clôture de caisse (Billetage)</h3>
             <div className="mt-4 space-y-3 text-sm text-[#111111]">
               <div>
                 <label htmlFor="close-register-counted-cash" className="mb-1 block font-medium">Espèces comptées</label>
-                <input id="close-register-counted-cash" type="number" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} className="w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
+                <input id="close-register-counted-cash" type="number" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} style={{ colorScheme: 'light', backgroundColor: '#ffffff', color: '#111111' }} className="w-full rounded-xl border border-[#D4AF37]/25 px-3 py-2 outline-none focus:border-[#D4AF37]" />
               </div>
               <div>
                 <label htmlFor="close-register-notes" className="mb-1 block font-medium">Notes</label>
-                <textarea id="close-register-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[90px] w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
+                <textarea id="close-register-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[56px] w-full rounded-xl border border-[#D4AF37]/25 bg-white px-3 py-2 text-[#111111] outline-none focus:border-[#D4AF37]" />
               </div>
             </div>
             <div className="mt-5 flex flex-wrap justify-end gap-2">

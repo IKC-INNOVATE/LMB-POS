@@ -119,6 +119,7 @@ export interface ReceiptData {
 export interface SaleReceipt {
   id?: string;
   receiptNumber?: string;
+  receipt_number?: string;
   storeName?: string;
   cashierName?: string;
   customerName?: string;

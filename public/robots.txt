@@ -1,0 +1,3 @@
+# Outil interne (caisse / gestion) — ne doit pas être exploré ni indexé.
+User-agent: *
+Disallow: /

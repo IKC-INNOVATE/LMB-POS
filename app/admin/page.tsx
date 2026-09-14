@@ -1246,8 +1246,8 @@ export default function AdminDashboardPage() {
                           rawVipStatus === 'VIP' || rawVipStatus === 'VIP_PREMIUM' ? rawVipStatus : 'STANDARD';
 
                         return (
-                          <tr key={sale.id ?? sale.receiptNumber ?? `sale-${saleIndex}`} className="hover:bg-slate-800/40 transition">
-                            <td className="py-3 px-3 text-cyan-300 font-bold">{sale.receiptNumber ?? sale.id ?? '—'}</td>
+                          <tr key={sale.id ?? sale.receiptNumber ?? `sale-${saleIndex}`} className="hover:bg-slate-800/40 transition align-top">
+                            <td className="py-3 px-3 text-cyan-300 font-bold align-top break-all">{sale.receipt_number ?? sale.receiptNumber ?? sale.id ?? '—'}</td>
                             <td className="py-3 px-3 text-slate-300 font-sans">
                               {new Date(sale.created_at ?? sale.createdAt ?? fallbackNowIso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}{' '}
                               <span className="text-slate-500 text-[10px]">

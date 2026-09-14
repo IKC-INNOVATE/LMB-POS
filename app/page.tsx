@@ -9,6 +9,7 @@ import { CartItem, Customer, SaleReceipt, ReceiptData } from '@/types';
 import CashExpenseButton from '@/components/pos/CashExpenseButton';
 import CloseRegisterButton from '@/components/pos/CloseRegisterButton';
 import OpenRegisterButton from '@/components/pos/OpenRegisterButton';
+import PhysicalInventoryButton from '@/components/pos/PhysicalInventoryButton';
 import { getOpenRegister, RegisterSession } from '@/lib/services/register';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { getCurrentStaff, signOut, StaffProfile } from '@/lib/services/auth';
@@ -533,22 +534,39 @@ export default function HomePage() {
           return;
         }
       }
-      // Build payment payload
-      let finalPaymentMethod = 'ESPECES';
+      // Construction du paiement : on conserve TOUJOURS le canal réel choisi
+      // par le caissier (ESPECES/CB/WAVE/OM/SPLIT) dans payment_method, y
+      // compris pour un acompte.
+      //
+      // Avant cette correction, cocher « Acompte / Réservation » remplaçait
+      // purement et simplement le moyen de paiement réel par la chaîne
+      // 'PARTIAL_PAYMENT' : le canal réel disparaissait complètement. Résultat
+      // concret : la clôture de caisse ne comptait plus les acomptes payés en
+      // espèces dans le fond de caisse théorique, et la réconciliation
+      // Wave/Orange Money ne retrouvait plus les acomptes payés via ces
+      // plateformes (ils tombaient dans « non identifiés »).
+      //
+      // Le fait qu'il s'agisse d'un acompte est maintenant une information
+      // supplémentaire portée par payment_details (isDeposit/paid/balance),
+      // et non plus un faux moyen de paiement qui écrase le vrai.
+      const finalPaymentMethod: string = paymentMethod ?? 'ESPECES';
       let paymentDetails: Record<string, number> | null = null;
 
-      if (isPartial) {
-        finalPaymentMethod = 'PARTIAL_PAYMENT';
-        const paid = Number(partialAmount || 0);
-        paymentDetails = { paid, balance: Math.max(0, total - paid) };
-      } else if (paymentMethod === 'SPLIT') {
-        finalPaymentMethod = 'SPLIT';
+      if (finalPaymentMethod === 'SPLIT') {
         // Nom réel de la 2ᵉ méthode saisi par le caissier (ex. « WAVE ») ;
         // « Autre » seulement si le champ est laissé vide.
         const otherLabel = splitOtherLabel.trim() || 'Autre';
         paymentDetails = { cash: Number(splitCash || 0), [otherLabel]: Number(splitOther || 0) };
-      } else {
-        finalPaymentMethod = paymentMethod ?? 'ESPECES';
+      }
+
+      if (isPartial) {
+        const paid = Number(partialAmount || 0);
+        paymentDetails = {
+          ...(paymentDetails ?? {}),
+          isDeposit: 1,
+          paid,
+          balance: Math.max(0, total - paid),
+        };
       }
 
       try {
@@ -678,6 +696,11 @@ export default function HomePage() {
                   storeCode={registerSession?.store_code ?? effectiveStoreCode}
                   onSuccess={() => refreshRegister()}
                   onClose={() => refreshRegister()}
+                />
+                <PhysicalInventoryButton
+                  cashierName={registerSession?.cashier_name ?? cashierName}
+                  storeCity={activeStoreCity}
+                  products={catalogProducts}
                 />
               </>
             ) : (
