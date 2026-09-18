@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ReceiptModal, { ReceiptModalProps, ReceiptItem } from '@/components/pos/ReceiptModal';
 import { Product, SaleReceipt } from '@/types';
@@ -29,12 +29,20 @@ import {
   Receipt,
   Boxes,
   FileCheck,
-  Handshake
+  Handshake,
+  LayoutDashboard,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  ShoppingCart,
+  Bell
 } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 
-type InlineTabId = 'STOCK' | 'INVENTORY_REPORTS' | 'ADMIN_FINANCES' | 'SALES_AUDIT';
+type InlineTabId = 'OVERVIEW' | 'STOCK' | 'INVENTORY_REPORTS' | 'ADMIN_FINANCES' | 'SALES_AUDIT';
+
+type OverviewPeriod = 'TODAY' | '7D' | '30D';
 
 interface LegacySaleItem {
   id?: string;
@@ -87,6 +95,28 @@ interface InventoryReportItem {
   details: InventoryReportDetailItem[];
 }
 
+const OVERVIEW_PAYMENT_LABELS: Record<string, string> = {
+  ESPECES: 'Espèces',
+  WAVE_SN: 'Wave',
+  WAVE_CI: 'Wave',
+  ORANGE_MONEY_SN: 'Orange Money',
+  ORANGE_MONEY_CI: 'Orange Money',
+  MTN_MOMO_CI: 'MTN MoMo',
+  MOOV_MONEY_CI: 'Moov Money',
+  CARTE_BANCAIRE: 'Carte bancaire',
+};
+
+const OVERVIEW_PAYMENT_STYLE: Record<string, string> = {
+  ESPECES: 'bg-cyan-500/10 text-cyan-300',
+  WAVE_SN: 'bg-emerald-950/60 text-emerald-400',
+  WAVE_CI: 'bg-emerald-950/60 text-emerald-400',
+  ORANGE_MONEY_SN: 'bg-amber-500/20 text-amber-400',
+  ORANGE_MONEY_CI: 'bg-amber-500/20 text-amber-400',
+  MTN_MOMO_CI: 'bg-amber-500/20 text-amber-400',
+  MOOV_MONEY_CI: 'bg-emerald-950/60 text-emerald-400',
+  CARTE_BANCAIRE: 'bg-slate-800 text-slate-200',
+};
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [staffRole, setStaffRole] = useState<StaffRole | null>(null);
@@ -103,11 +133,31 @@ export default function AdminDashboardPage() {
   const [, setTransfers] = useState<Record<string, unknown>[]>([]);
   const [inventoryReports, setInventoryReports] = useState<InventoryReportItem[]>([]);
   const [, setAttendanceRecords] = useState<Record<string, unknown>[]>([]);
+  // Fournisseurs & commandes fournisseurs, uniquement pour le KPI
+  // "Fournisseurs" du Tableau de bord (le module complet Achats &
+  // Fournisseurs reste sur sa page dédiée /admin/purchases).
+  const [suppliersCount, setSuppliersCount] = useState<number>(0);
+  const [pendingPurchaseOrdersCount, setPendingPurchaseOrdersCount] = useState<number>(0);
 
   // NAVIGATION ONGLETS
-  // Seuls STOCK / INVENTORY_REPORTS / ADMIN_FINANCES / SALES_AUDIT sont rendus
-  // en ligne dans ce fichier - les autres onglets renvoient vers une page dédiée.
-  const [activeTab, setActiveTab] = useState<InlineTabId>('STOCK');
+  // Seuls OVERVIEW / STOCK / INVENTORY_REPORTS / ADMIN_FINANCES / SALES_AUDIT
+  // sont rendus en ligne dans ce fichier - les autres onglets renvoient vers
+  // une page dédiée.
+  // Onglet initial lu depuis l'URL (?tab=...) pour permettre à la nouvelle
+  // barre latérale (AppSidebar, Phase A du nouveau design) de renvoyer
+  // directement vers un onglet précis (ex: Grand Livre des Ventes) sans
+  // changer le comportement par défaut (OVERVIEW, la vraie vue d'ensemble,
+  // si absent/invalide — corrigé le 15/09, avant : retombait sur STOCK).
+  const searchParams = useSearchParams();
+  const INLINE_TAB_IDS: InlineTabId[] = ['OVERVIEW', 'STOCK', 'INVENTORY_REPORTS', 'ADMIN_FINANCES', 'SALES_AUDIT'];
+  const initialTabParam = searchParams?.get('tab');
+  // Par défaut (aucun ?tab= dans l'URL, ex: clic sur "Tableau de bord" dans la
+  // barre latérale) -> vraie vue d'ensemble OVERVIEW, au lieu du même écran
+  // que "Stocks & Transferts" comme avant (collision corrigée le 15/09).
+  const [activeTab, setActiveTab] = useState<InlineTabId>(
+    (INLINE_TAB_IDS as string[]).includes(initialTabParam || '') ? (initialTabParam as InlineTabId) : 'OVERVIEW'
+  );
+  const [overviewPeriod, setOverviewPeriod] = useState<OverviewPeriod>('TODAY');
 
   // MODALE DÉTAIL D'UN RAPPORT D'INVENTAIRE
   const [selectedReportDetail, setSelectedReportDetail] = useState<InventoryReportItem | null>(null);
@@ -243,6 +293,12 @@ export default function AdminDashboardPage() {
       // 5. Pointage RH
       const { data: attData } = await supabase.from('lmb_attendance').select('*').order('timestamp', { ascending: false }).limit(30);
       if (attData) setAttendanceRecords(attData);
+
+      // 6. Fournisseurs & Commandes fournisseurs (KPI "Fournisseurs" du Tableau de bord)
+      const { data: suppliersData } = await supabase.from('lmb_suppliers').select('id');
+      setSuppliersCount(suppliersData ? suppliersData.length : 0);
+      const { data: poData } = await supabase.from('lmb_purchase_orders').select('id, status');
+      setPendingPurchaseOrdersCount(poData ? poData.filter((po) => po.status === 'ORDERED').length : 0);
 
     } catch (e) {
       console.error('Erreur chargement Supabase:', e);
@@ -643,8 +699,146 @@ export default function AdminDashboardPage() {
     };
   }, [sales, expenses, products, inventoryReports]);
 
+  // ---------------------------------------------------------------------------
+  // TABLEAU DE BORD (VUE D'ENSEMBLE) — KPI, graphiques & dernières transactions
+  // Ajout du 15/09 (maquette suivie à la lettre) : tout est calculé à partir
+  // des données déjà chargées (sales / expenses / products / inventoryReports),
+  // aucune donnée fictive. Le sélecteur de période (Aujourd'hui / 7 jours /
+  // 30 jours) ne relance aucun appel réseau, il refiltre juste ce qui est déjà
+  // en mémoire.
+  // ---------------------------------------------------------------------------
+  const overviewPeriodBounds = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const days = overviewPeriod === '7D' ? 7 : overviewPeriod === '30D' ? 30 : 1;
+    const start = new Date(startOfToday);
+    start.setDate(start.getDate() - (days - 1));
+    const prevStart = new Date(start);
+    prevStart.setDate(prevStart.getDate() - days);
+    const prevEnd = new Date(start);
+    return { start, prevStart, prevEnd };
+  }, [overviewPeriod]);
+
+  const overviewPeriodLabel =
+    overviewPeriod === 'TODAY' ? 'du jour' : overviewPeriod === '7D' ? '7 jours' : '30 jours';
+
+  const overviewKpis = useMemo(() => {
+    const saleDate = (s: SaleReceipt) => new Date(s.created_at ?? s.createdAt ?? fallbackNowIso);
+    const validSales = sales.filter((s) => !s.payment_method?.includes('ANNULÉ'));
+    const sumRevenue = (list: SaleReceipt[]) =>
+      list.reduce((acc, s) => acc + (Number(s.total_amount_xof ?? s.totalAmountXof ?? 0) || 0), 0);
+
+    const periodSales = validSales.filter((s) => saleDate(s) >= overviewPeriodBounds.start);
+    const prevPeriodSales = validSales.filter((s) => {
+      const d = saleDate(s);
+      return d >= overviewPeriodBounds.prevStart && d < overviewPeriodBounds.prevEnd;
+    });
+    const periodRevenue = sumRevenue(periodSales);
+    const prevPeriodRevenue = sumRevenue(prevPeriodSales);
+    const revenueDeltaPct =
+      prevPeriodRevenue > 0 ? ((periodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100 : null;
+
+    const expenseDate = (e: Record<string, unknown>) => new Date(String(e.created_at ?? fallbackNowIso));
+    const periodExpenses = expenses
+      .filter((e) => expenseDate(e) >= overviewPeriodBounds.start)
+      .reduce((acc, e) => acc + (Number(e.amount_xof) || 0), 0);
+    const periodNetProfit = periodRevenue - periodExpenses;
+    const marginPct = periodRevenue > 0 ? (periodNetProfit / periodRevenue) * 100 : null;
+
+    const outOfStockCount = products.filter((p) => (p.stock_dakar || 0) + (p.stock_abidjan || 0) <= 0).length;
+
+    return { periodRevenue, revenueDeltaPct, periodNetProfit, marginPct, outOfStockCount };
+  }, [sales, expenses, products, overviewPeriodBounds, fallbackNowIso]);
+
+  // Graphique "Évolution des ventes" : suit désormais le même sélecteur de
+  // période que les cartes KPI (corrigé le 15/09 - vous aviez signalé que la
+  // courbe ne changeait pas quand vous cliquiez sur Aujourd'hui/7 jours/30
+  // jours). Aujourd'hui -> heure par heure depuis minuit jusqu'à maintenant ;
+  // 7/30 jours -> un point par jour, comme avant.
+  const salesEvolution = useMemo(() => {
+    const now = new Date();
+    const validSales = sales.filter((s) => !s.payment_method?.includes('ANNULÉ'));
+    const sumBetween = (start: Date, end: Date) =>
+      validSales
+        .filter((s) => {
+          const d = new Date(s.created_at ?? s.createdAt ?? fallbackNowIso);
+          return d >= start && d < end;
+        })
+        .reduce((acc, s) => acc + (Number(s.total_amount_xof ?? s.totalAmountXof ?? 0) || 0), 0);
+
+    if (overviewPeriod === 'TODAY') {
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const currentHour = now.getHours();
+      const points: { label: string; total: number }[] = [];
+      for (let h = 0; h <= currentHour; h++) {
+        const hourStart = new Date(startOfToday);
+        hourStart.setHours(h);
+        const hourEnd = new Date(hourStart);
+        hourEnd.setHours(h + 1);
+        points.push({ label: h % 3 === 0 ? `${h}h` : '', total: sumBetween(hourStart, hourEnd) });
+      }
+      return points;
+    }
+
+    const dayLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    const days = overviewPeriod === '30D' ? 30 : 7;
+    const points: { label: string; total: number }[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+      const total = sumBetween(dayStart, dayEnd);
+      const label = days === 7 ? dayLabels[dayStart.getDay()] : (days - 1 - i) % 5 === 0 ? `${dayStart.getDate()}/${dayStart.getMonth() + 1}` : '';
+      points.push({ label, total });
+    }
+    return points;
+  }, [sales, overviewPeriod, fallbackNowIso]);
+
+  const evolutionPeriodLabel =
+    overviewPeriod === 'TODAY' ? "Aujourd'hui, heure par heure" : overviewPeriod === '7D' ? '7 derniers jours' : '30 derniers jours';
+
+  const salesEvolutionChart = useMemo(() => {
+    const n = salesEvolution.length;
+    const max = Math.max(1, ...salesEvolution.map((d) => d.total));
+    const step = n > 1 ? 560 / (n - 1) : 0;
+    const points = salesEvolution.map((d, i) => {
+      const x = 20 + i * step;
+      const y = 180 - (d.total / max) * 150;
+      return { x, y, ...d };
+    });
+    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const last = points[points.length - 1] ?? { x: 20, y: 180 };
+    const areaPath = points.length > 0 ? `${linePath} L${last.x.toFixed(1)},180 L20,180 Z` : '';
+    return { max, points, linePath, areaPath };
+  }, [salesEvolution]);
+
+  const stockByStore = useMemo(() => {
+    const dkr = stats.totalStockDkr;
+    const abj = stats.totalStockAbj;
+    const total = dkr + abj;
+    const dkrPct = total > 0 ? (dkr / total) * 100 : 0;
+    const circumference = 2 * Math.PI * 48;
+    const dkrDash = (dkrPct / 100) * circumference;
+    return { dkr, abj, total, dkrPct, dkrDash, circumference };
+  }, [stats.totalStockDkr, stats.totalStockAbj]);
+
+  const topSellingProducts = useMemo(() => {
+    return [...productsWithSalesStats].sort((a, b) => b.qtySold - a.qtySold).slice(0, 3);
+  }, [productsWithSalesStats]);
+  const topSellingMax = Math.max(1, ...topSellingProducts.map((p) => p.qtySold));
+
+  const recentTransactions = useMemo(() => {
+    return [...sales]
+      .sort((a, b) => {
+        const da = new Date(a.created_at ?? a.createdAt ?? fallbackNowIso).getTime();
+        const db = new Date(b.created_at ?? b.createdAt ?? fallbackNowIso).getTime();
+        return db - da;
+      })
+      .slice(0, 5);
+  }, [sales, fallbackNowIso]);
+
   return (
-    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans pb-12 selection:bg-[#D4AF37]/30 selection:text-[#111111]">
+    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans pb-12 selection:bg-[#D4AF37]/30 selection:text-[#111111] lmb-dashboard">
       {/* HEADER DIRECTION */}
       <header className="sticky top-0 z-30 border-b border-[#D4AF37]/30 bg-[#111111]/95 px-6 py-4 shadow-luxury backdrop-blur-xl">
         <div className="flex items-center justify-between gap-4">
@@ -678,6 +872,7 @@ export default function AdminDashboardPage() {
       <div className="max-w-[1600px] mx-auto px-6 pt-6">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-[#D4AF37]/20 text-xs font-semibold">
           {[
+            { id: 'OVERVIEW', label: '🏠 Tableau de bord', icon: LayoutDashboard },
             { id: 'STOCK', label: '📦 Stocks, Transferts & Palmarès', icon: Package },
             { id: 'INVENTORY_REPORTS', label: '📋 Rapports d\'Inventaires Physiques', icon: Boxes },
             { id: 'ADMIN_FINANCES', label: '🏛️ Charges & Bilan Financier', icon: Building2 },
@@ -739,7 +934,7 @@ export default function AdminDashboardPage() {
                     router.push('/admin/service-providers');
                     return;
                   }
-                  const inlineTabIds: InlineTabId[] = ['STOCK', 'INVENTORY_REPORTS', 'ADMIN_FINANCES', 'SALES_AUDIT'];
+                  const inlineTabIds: InlineTabId[] = ['OVERVIEW', 'STOCK', 'INVENTORY_REPORTS', 'ADMIN_FINANCES', 'SALES_AUDIT'];
                   if ((inlineTabIds as string[]).includes(tab.id)) {
                     setActiveTab(tab.id as InlineTabId);
                   }
@@ -759,6 +954,303 @@ export default function AdminDashboardPage() {
       </div>
 
       <main className="max-w-[1600px] mx-auto px-6 pt-6">
+        {/* ========================================================================= */}
+        {/* TABLEAU DE BORD — VUE D'ENSEMBLE (onglet par défaut de /admin) */}
+        {/* ========================================================================= */}
+        {activeTab === 'OVERVIEW' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-100">Vue d&apos;ensemble</h2>
+                <p className="text-xs text-slate-400 mt-1">Toutes boutiques — Dakar &amp; Abidjan</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex bg-slate-900/90 border border-slate-800 rounded-full p-1">
+                  {(
+                    [
+                      { id: 'TODAY', label: "Aujourd'hui" },
+                      { id: '7D', label: '7 jours' },
+                      { id: '30D', label: '30 jours' },
+                    ] as { id: OverviewPeriod; label: string }[]
+                  ).map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setOverviewPeriod(p.id)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                        overviewPeriod === p.id ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative w-9 h-9 rounded-full bg-slate-900/90 border border-slate-800 flex items-center justify-center text-slate-400">
+                  <Bell className="w-4 h-4" />
+                  {(overviewKpis.outOfStockCount > 0 || stats.anomaliesCount > 0) && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 border border-slate-900" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* KPI ROW */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-slate-900/90 border border-cyan-500/30 rounded-3xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-cyan-300 font-bold uppercase">Ventes {overviewPeriodLabel}</span>
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300">
+                    <ShoppingCart className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-slate-100 font-mono mt-2">
+                  {overviewKpis.periodRevenue.toLocaleString('fr-FR')} <span className="text-xs text-slate-400">FCFA</span>
+                </p>
+                {overviewKpis.revenueDeltaPct === null ? (
+                  <p className="text-xs text-slate-400 mt-2.5">Pas de données sur la période précédente</p>
+                ) : (
+                  <div
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold mt-2.5 ${
+                      overviewKpis.revenueDeltaPct >= 0 ? 'bg-emerald-950/60 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                    }`}
+                  >
+                    {overviewKpis.revenueDeltaPct >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {overviewKpis.revenueDeltaPct >= 0 ? '+' : ''}
+                    {overviewKpis.revenueDeltaPct.toFixed(0)}% vs période précédente
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-emerald-950/60 border border-emerald-500/40 rounded-3xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-emerald-300 font-bold uppercase">Bénéfice net {overviewPeriodLabel}</span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-300">
+                    <Wallet className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-emerald-400 font-mono mt-2">
+                  {overviewKpis.periodNetProfit.toLocaleString('fr-FR')} <span className="text-xs text-slate-400">FCFA</span>
+                </p>
+                <p className="text-xs text-slate-400 mt-2.5">
+                  {overviewKpis.marginPct === null ? (
+                    'Aucune vente sur la période'
+                  ) : (
+                    <>
+                      Marge <strong className="text-slate-100">{overviewKpis.marginPct.toFixed(0)}%</strong> sur la période
+                    </>
+                  )}
+                </p>
+              </div>
+
+              <div className="bg-slate-900/90 border border-cyan-500/30 rounded-3xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-cyan-300 font-bold uppercase">Stock total</span>
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300">
+                    <Boxes className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-slate-100 font-mono mt-2">
+                  {(stats.totalStockDkr + stats.totalStockAbj).toLocaleString('fr-FR')}{' '}
+                  <span className="text-xs text-slate-400">flacons</span>
+                </p>
+                {overviewKpis.outOfStockCount > 0 ? (
+                  <div className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 text-amber-400 px-2.5 py-1 text-xs font-semibold mt-2.5">
+                    <AlertTriangle className="w-3 h-3" />
+                    {overviewKpis.outOfStockCount} produit{overviewKpis.outOfStockCount > 1 ? 's' : ''} en rupture
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1 rounded-full bg-emerald-950/60 text-emerald-400 px-2.5 py-1 text-xs font-semibold mt-2.5">
+                    Aucune rupture
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-bold uppercase">Fournisseurs</span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-300">
+                    <Handshake className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-slate-100 font-mono mt-2">
+                  {suppliersCount} <span className="text-xs text-slate-400">actifs</span>
+                </p>
+                <p className="text-xs text-slate-400 mt-2.5">
+                  {pendingPurchaseOrdersCount} commande{pendingPurchaseOrdersCount > 1 ? 's' : ''} en attente
+                </p>
+              </div>
+            </div>
+
+            {/* CHARTS ROW */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="lg:col-span-2 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-slate-100">Évolution des ventes</h3>
+                  <span className="text-xs text-slate-400">{evolutionPeriodLabel}</span>
+                </div>
+                {salesEvolutionChart.max <= 1 ? (
+                  <p className="text-xs text-slate-400 py-10 text-center">Aucune vente enregistrée sur cette période.</p>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 600 200" width="100%" height="180" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="lmbOverviewAreaFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#0891b2" stopOpacity="0.28" className="lmb-chart-stop-start" />
+                          <stop offset="100%" stopColor="#0891b2" stopOpacity="0" className="lmb-chart-stop-end" />
+                        </linearGradient>
+                      </defs>
+                      <line x1="20" y1="180" x2="580" y2="180" className="stroke-slate-800" strokeWidth="1" />
+                      <path d={salesEvolutionChart.areaPath} fill="url(#lmbOverviewAreaFill)" />
+                      <path
+                        d={salesEvolutionChart.linePath}
+                        fill="none"
+                        className="stroke-cyan-600"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      {salesEvolutionChart.points.length <= 10 &&
+                        salesEvolutionChart.points.map((p, i) => (
+                          <circle key={i} cx={p.x} cy={p.y} r="3.5" className="fill-slate-900 stroke-cyan-600" strokeWidth="2.2" />
+                        ))}
+                    </svg>
+                    <div className="flex justify-between px-2 mt-1">
+                      {salesEvolution.map((d, i) => (
+                        <span key={i} className="text-[10px] text-slate-400">
+                          {d.label}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-lg">
+                <h3 className="text-sm font-bold text-slate-100 mb-4">Stock par boutique</h3>
+                <div className="flex items-center gap-5">
+                  <svg width="104" height="104" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="48" fill="none" className="stroke-cyan-100" strokeWidth="16" />
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="48"
+                      fill="none"
+                      className="stroke-cyan-600"
+                      strokeWidth="16"
+                      strokeDasharray={`${stockByStore.dkrDash.toFixed(1)} ${stockByStore.circumference.toFixed(1)}`}
+                      strokeDashoffset="0"
+                      transform="rotate(-90 60 60)"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-sm bg-cyan-600" />
+                      <span className="text-xs text-slate-400">Dakar</span>
+                      <span className="text-xs font-bold text-slate-100 ml-auto">{stockByStore.dkr.toLocaleString('fr-FR')}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-sm bg-cyan-100" />
+                      <span className="text-xs text-slate-400">Abidjan</span>
+                      <span className="text-xs font-bold text-slate-100 ml-auto">{stockByStore.abj.toLocaleString('fr-FR')}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-5 pt-4 border-t border-slate-800">
+                  <p className="text-[11px] font-bold text-slate-400 mb-2.5 tracking-wide uppercase">Meilleures ventes</p>
+                  {topSellingProducts.length === 0 || topSellingMax <= 1 ? (
+                    <p className="text-xs text-slate-400">Aucune vente enregistrée.</p>
+                  ) : (
+                    <div className="flex flex-col gap-2.5">
+                      {topSellingProducts.map((p) => (
+                        <div key={p.id}>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-slate-300 truncate pr-2">{p.name}</span>
+                            <span className="font-bold text-slate-100">{p.qtySold}</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-cyan-600"
+                              style={{ width: `${Math.max(4, (p.qtySold / topSellingMax) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* DERNIÈRES TRANSACTIONS */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-slate-100">Dernières transactions</h3>
+                <button
+                  onClick={() => setActiveTab('SALES_AUDIT')}
+                  className="text-xs font-semibold text-cyan-300 hover:text-cyan-200 cursor-pointer"
+                >
+                  Voir tout
+                </button>
+              </div>
+              {recentTransactions.length === 0 ? (
+                <p className="text-xs text-slate-400 py-6 text-center">Aucune transaction enregistrée pour le moment.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="text-left">
+                        <th className="text-[11px] text-slate-400 font-bold pb-2.5">REÇU</th>
+                        <th className="text-[11px] text-slate-400 font-bold pb-2.5">CLIENT</th>
+                        <th className="text-[11px] text-slate-400 font-bold pb-2.5">BOUTIQUE</th>
+                        <th className="text-[11px] text-slate-400 font-bold pb-2.5">PAIEMENT</th>
+                        <th className="text-[11px] text-slate-400 font-bold pb-2.5">HEURE</th>
+                        <th className="text-[11px] text-slate-400 font-bold pb-2.5 text-right">MONTANT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentTransactions.map((sale, i) => {
+                        const paymentCode = sale.payment_method ?? sale.paymentMethod ?? '';
+                        const storeRaw = sale.storeName ?? sale.store_code ?? '';
+                        const storeLabel =
+                          storeRaw === 'DAKAR' ? 'Dakar' : storeRaw === 'ABIDJAN' ? 'Abidjan' : storeRaw || '—';
+                        const createdAt = sale.created_at ?? sale.createdAt;
+                        const timeLabel = createdAt
+                          ? new Date(createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                          : '—';
+                        const amount = Number(sale.total_amount_xof ?? sale.totalAmountXof ?? 0) || 0;
+                        return (
+                          <tr key={sale.id ?? i} className="border-t border-slate-800">
+                            <td className="py-3 text-xs font-semibold text-slate-100">
+                              #{sale.receiptNumber ?? sale.receipt_number ?? (sale.id ? sale.id.slice(0, 8) : '—')}
+                            </td>
+                            <td className="py-3 text-xs text-slate-300">
+                              {sale.customer_name ?? sale.customerName ?? 'Client de passage'}
+                            </td>
+                            <td className="py-3 text-xs text-slate-400">{storeLabel}</td>
+                            <td className="py-3">
+                              <span
+                                className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                                  OVERVIEW_PAYMENT_STYLE[paymentCode] ?? 'bg-slate-800 text-slate-300'
+                                }`}
+                              >
+                                {OVERVIEW_PAYMENT_LABELS[paymentCode] ?? paymentCode ?? '—'}
+                              </span>
+                            </td>
+                            <td className="py-3 text-xs text-slate-400">{timeLabel}</td>
+                            <td className="py-3 text-xs font-bold text-slate-100 text-right">
+                              {amount.toLocaleString('fr-FR')} FCFA
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ========================================================================= */}
         {/* NOUVEL ONGLET : RAPPORTS D'INVENTAIRES PHYSIQUES ENREGISTRÉS */}
         {/* ========================================================================= */}
@@ -919,9 +1411,17 @@ export default function AdminDashboardPage() {
                     <p className="text-xs text-slate-400">Déduction automatique du stock d&apos;Abidjan et imputation des frais cargo sur Dakar.</p>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
-                  {shipmentCart.length} soins ajoutés
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
+                    {shipmentCart.length} soins ajoutés
+                  </span>
+                  <Link
+                    href="/admin/transfers"
+                    className="text-xs font-bold text-cyan-300 hover:text-cyan-200 underline underline-offset-2 whitespace-nowrap"
+                  >
+                    Voir &amp; confirmer les transferts →
+                  </Link>
+                </div>
               </div>
 
               <form onSubmit={handleAddProductToShipmentCart} className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">

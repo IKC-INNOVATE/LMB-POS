@@ -36,7 +36,7 @@ type StatusFilter = 'ALL' | VipStatus;
 const vipStyles: Record<VipStatus, string> = {
   STANDARD: 'bg-slate-100/80 text-slate-700 border border-slate-200',
   VIP: 'bg-amber-100 text-amber-800 border border-amber-300 shadow-sm',
-  VIP_PREMIUM: 'bg-gradient-to-r from-amber-600 to-yellow-500 text-white border border-amber-300 shadow-sm',
+  VIP_PREMIUM: 'vip-premium-badge bg-gradient-to-r from-amber-600 to-yellow-500 text-white border border-amber-300 shadow-sm',
 };
 
 // `lmb_customers` n'a pas de colonne texte dédiée aux notes esthétiques : elles
@@ -340,7 +340,7 @@ export default function CustomersCRMPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-[#0A0F1D] text-slate-100">
+    <div className="min-h-screen bg-[#0A0F1D] text-slate-100 lmb-customers">
       <header className="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-30 backdrop-blur-md">
         <div className="max-w-[1500px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

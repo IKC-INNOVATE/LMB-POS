@@ -670,7 +670,7 @@ export default function HomePage() {
 
   return (
     <AuthGuard>
-      <main className="min-h-screen bg-[#F9F9FB] text-[#111111] print:hidden">
+      <main className="min-h-screen bg-[#F9F9FB] text-[#111111] print:hidden lmb-caisse">
       <header className="border-b border-[#D4AF37]/30 bg-[#111111]/95 px-6 py-4 text-[#F9F9FB] backdrop-blur-sm shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div>
@@ -820,7 +820,7 @@ export default function HomePage() {
               value={customerQuery}
               onChange={(e) => setCustomerQuery(e.target.value)}
               placeholder="Rechercher un client par nom, téléphone ou email"
-              className="rounded-xl px-4 py-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+              className="rounded-xl px-4 py-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 lmb-pill"
             />
 
             {isSearching && <p className="text-xs text-cyan-300">Recherche en cours...</p>}
@@ -960,7 +960,7 @@ export default function HomePage() {
                     value={productQuery}
                     onChange={(e) => setProductQuery(e.target.value)}
                     placeholder="Rechercher un produit par nom, SKU ou code-barres"
-                    className="rounded-xl px-4 py-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                    className="rounded-xl px-4 py-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 lmb-pill"
                   />
                   {!staffStoreCity ? (
                     <button

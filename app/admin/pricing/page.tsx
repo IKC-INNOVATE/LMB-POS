@@ -63,7 +63,7 @@ type CellStatus = 'saving' | 'saved' | { error: string };
 
 export default function PricingPage() {
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="mx-auto max-w-6xl px-6 py-8 lmb-pricing">
       <div className="mb-6 flex items-center gap-3">
         <SecondaryButton
           href="/admin"
@@ -539,7 +539,7 @@ function PromotionsSection() {
   };
 
   return (
-    <section className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
+    <section id="promotions" className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg scroll-mt-6">
       <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-white">
         <BadgePercent className="h-4 w-4 text-amber-400" />
         Gestion des promotions

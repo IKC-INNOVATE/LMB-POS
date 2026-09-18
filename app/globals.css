@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -37,6 +38,13 @@ body {
   box-sizing: border-box;
 }
 
+/* Polices de la nouvelle maquette, utilisées uniquement par les nouveaux
+   composants (barre latérale, puis écrans migrés phase par phase) — le
+   reste de l'application garde sa police Arial actuelle tant qu'un écran
+   n'a pas été migré. */
+.font-lmb-heading { font-family: 'Sora', Arial, Helvetica, sans-serif; }
+.font-lmb-body { font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif; }
+
 ::selection {
   background: rgba(212, 175, 55, 0.28);
   color: #111111;
@@ -62,6 +70,28 @@ body {
    mode clair est actif (classe "light" posée sur <html> par le bouton en
    haut à droite), ces variables et classes changent de valeur, ce qui
    éclaircit automatiquement tous les écrans qui les utilisent. */
+/* ===== Nouveau système de design (maquette validée 15/09) =====
+   Nouveaux jetons de couleur, additifs uniquement : rien d'existant ne les
+   utilise encore. Ils servent de base à la nouvelle barre de navigation
+   latérale (Phase A) puis, écran par écran dans les phases suivantes, aux
+   écrans eux-mêmes. --accent-lmb reste l'or actuel en thème sombre (inchangé)
+   et devient le rose pastel de la maquette en thème clair. */
+:root {
+  --lmb-accent-50: #EDF3F8; --lmb-accent-100: #D3E4F0; --lmb-accent-300: #8AB2D2;
+  --lmb-accent-500: #4682B4; --lmb-accent-600: #366590; --lmb-accent-700: #274A6B;
+  --lmb-sage-100: #E7F1E7; --lmb-sage-500: #5F9470; --lmb-sage-700: #3E6B4C;
+  --lmb-amber-100: #FBEDD6; --lmb-amber-600: #B67A20;
+  --lmb-red-100: #FBE6E3; --lmb-red-600: #B84D40;
+  --lmb-violet-100: #EFE7F7; --lmb-violet-500: #9B7FC0; --lmb-violet-600: #6B4C96;
+  --lmb-pink-300: #F1ACC7; --lmb-pink-500: #E2638E; --lmb-pink-600: #CB4A76;
+  --lmb-bg: #FAFAF8; --lmb-card: #FFFFFF; --lmb-border: #E9E6E1;
+  --lmb-ink: #27241F; --lmb-ink-soft: #75716A; --lmb-ink-faint: #A9A59D;
+  --accent-lmb: var(--gold);
+}
+html.light {
+  --accent-lmb: var(--lmb-accent-500);
+}
+
 html.light {
   /* Décalées d'un cran par rapport à une simple inversion, pour que les
      cartes/panneaux restent visiblement distincts du fond de page (au lieu
@@ -198,3 +228,1170 @@ input[type="number"] {
   color-scheme: dark;
 }
 
+
+/* ===== Phase B : Caisse — nouvelle identité visuelle (thème clair) =====
+   Le thème sombre de la Caisse reste strictement inchangé (accent or actuel).
+   En thème clair, le wrapper .lmb-caisse (ajouté uniquement sur la balise
+   <main> de app/page.tsx, aucune autre modification de logique) retinte les
+   classes dorées déjà utilisées dans cet écran vers le rose pastel de la
+   maquette validée. Les cartes (fond sombre -> blanc) sont déjà gérées par
+   les règles générales .bg-[#111111]/.bg-[#1A1A1A] plus haut dans ce fichier
+   et ne sont pas dupliquées ici. */
+html.light .lmb-caisse {
+  font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+}
+html.light .lmb-caisse h1,
+html.light .lmb-caisse h2,
+html.light .lmb-caisse h3 {
+  font-family: 'Sora', Arial, Helvetica, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+html.light .lmb-caisse .bg-\[\#F9F9FB\] {
+  background-color: var(--lmb-bg);
+}
+
+html.light .lmb-caisse .border-\[\#D4AF37\],
+html.light .lmb-caisse .border-\[\#D4AF37\]\/15,
+html.light .lmb-caisse .border-\[\#D4AF37\]\/25,
+html.light .lmb-caisse .border-\[\#D4AF37\]\/30,
+html.light .lmb-caisse .border-\[\#D4AF37\]\/40,
+html.light .lmb-caisse .border-\[\#D4AF37\]\/50,
+html.light .lmb-caisse .border-\[\#E7D393\] {
+  border-color: var(--lmb-accent-300);
+}
+
+html.light .lmb-caisse .bg-\[\#D4AF37\] {
+  background-color: var(--lmb-accent-500);
+}
+html.light .lmb-caisse .bg-\[\#D4AF37\]\/10 {
+  background-color: color-mix(in oklab, var(--lmb-accent-500) 10%, transparent);
+}
+html.light .lmb-caisse .bg-\[\#F5E3B3\] {
+  background-color: var(--lmb-accent-100);
+}
+
+html.light .lmb-caisse .text-\[\#D4AF37\] {
+  color: var(--lmb-accent-600);
+}
+html.light .lmb-caisse .text-\[\#F5E3B3\],
+html.light .lmb-caisse .hover\:text-\[\#F5E3B3\]:hover {
+  color: var(--lmb-accent-700);
+}
+
+html.light .lmb-caisse .shadow-\[\#D4AF37\]\/10 {
+  --tw-shadow-color: color-mix(in oklab, var(--lmb-accent-500) 10%, transparent);
+}
+
+html.light .lmb-caisse .hover\:bg-\[\#D4AF37\]:hover {
+  background-color: var(--lmb-accent-500);
+}
+html.light .lmb-caisse .hover\:bg-\[\#C5A059\]:hover {
+  background-color: var(--lmb-accent-600);
+}
+html.light .lmb-caisse .hover\:border-\[\#D4AF37\]:hover {
+  border-color: var(--lmb-accent-500);
+}
+
+html.light .lmb-caisse .from-\[\#D4AF37\] {
+  --tw-gradient-from: var(--lmb-accent-300);
+}
+html.light .lmb-caisse .to-\[\#C5A059\] {
+  --tw-gradient-to: var(--lmb-accent-600);
+}
+
+html.light .lmb-caisse .peer:checked ~ .peer-checked\:bg-\[\#D4AF37\] {
+  background-color: var(--lmb-accent-500);
+}
+
+/* ===== Phase B (suite) : Caisse — fidélité complète à la maquette =====
+   Le premier passage ne retintait que les anciennes couleurs "or". À la
+   demande explicite d'Ibrahim ("suivre l'intégralité de la maquette"), ce
+   second bloc retinte AUSSI les couleurs "fonctionnelles" restantes (cyan,
+   émeraude, rose, ardoise) vers la palette de la maquette validée : rose
+   pastel (accent), vert sauge (succès), rouge (erreurs), ambre (alertes).
+   Toujours actif uniquement en thème clair, toujours scoping via
+   .lmb-caisse, toujours zéro changement de logique — uniquement des
+   classes de couleur déjà présentes dans app/page.tsx et
+   components/pos/ReceiptModal.tsx (désormais également enveloppé par
+   .lmb-caisse, voir ce fichier). Les composants partagés (Input, Select,
+   PrimaryButton, SecondaryButton) ne sont pas modifiés eux-mêmes : ce
+   bloc les retinte uniquement quand ils apparaissent à l'intérieur de la
+   Caisse, sans toucher aux autres écrans pas encore migrés. */
+
+/* Cyan (recherche, info, focus) -> rose pastel (accent principal) */
+html.light .lmb-caisse .bg-cyan-500 { background-color: var(--lmb-accent-500); }
+html.light .lmb-caisse .bg-cyan-500\/10 { background-color: color-mix(in oklab, var(--lmb-accent-500) 10%, transparent); }
+html.light .lmb-caisse .border-cyan-500\/30 { border-color: var(--lmb-accent-300); }
+html.light .lmb-caisse .border-cyan-500\/40 { border-color: var(--lmb-accent-300); }
+html.light .lmb-caisse .focus\:border-cyan-500:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-caisse .focus\:ring-cyan-500\/20:focus { --tw-ring-color: color-mix(in oklab, var(--lmb-accent-500) 20%, transparent); }
+html.light .lmb-caisse .hover\:bg-cyan-400:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-caisse .text-cyan-100,
+html.light .lmb-caisse .text-cyan-200 { color: var(--lmb-accent-700); }
+html.light .lmb-caisse .text-cyan-300 { color: var(--lmb-accent-600); }
+
+/* Emeraude (succès, client confirmé, en stock) -> vert sauge */
+html.light .lmb-caisse .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-caisse .border-emerald-500\/30,
+html.light .lmb-caisse .border-emerald-500\/40 { border-color: var(--lmb-sage-500); }
+html.light .lmb-caisse .from-emerald-500\/10 { --tw-gradient-from: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-caisse .via-slate-900 { --tw-gradient-via: var(--lmb-card); }
+html.light .lmb-caisse .to-slate-950 { --tw-gradient-to: var(--lmb-sage-100); }
+html.light .lmb-caisse .shadow-emerald-950\/20 { --tw-shadow-color: color-mix(in oklab, var(--lmb-sage-700) 15%, transparent); }
+html.light .lmb-caisse .text-emerald-100,
+html.light .lmb-caisse .text-emerald-200,
+html.light .lmb-caisse .text-emerald-200\/80,
+html.light .lmb-caisse .text-emerald-300 { color: var(--lmb-sage-700); }
+
+/* Rose (erreurs, rupture de stock, sous le prix plancher) -> rouge */
+html.light .lmb-caisse .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-caisse .bg-rose-950\/40 { background-color: var(--lmb-red-100); }
+html.light .lmb-caisse .border-rose-500,
+html.light .lmb-caisse .border-rose-500\/30,
+html.light .lmb-caisse .border-rose-500\/50,
+html.light .lmb-caisse .border-rose-500\/60 { border-color: var(--lmb-red-600); }
+html.light .lmb-caisse .text-rose-200,
+html.light .lmb-caisse .text-rose-300 { color: var(--lmb-red-600); }
+
+/* Ambre (alertes/avertissements) -> teinte ambre de la maquette (le sens
+   "alerte" est conservé, seule la nuance exacte est alignée). */
+html.light .lmb-caisse .bg-amber-500 { background-color: var(--lmb-amber-600); }
+html.light .lmb-caisse .bg-amber-500\/10 { background-color: color-mix(in oklab, var(--lmb-amber-600) 10%, transparent); }
+html.light .lmb-caisse .bg-amber-500\/5 { background-color: color-mix(in oklab, var(--lmb-amber-600) 5%, transparent); }
+html.light .lmb-caisse .border-amber-400\/50,
+html.light .lmb-caisse .border-amber-500\/30,
+html.light .lmb-caisse .border-amber-500\/40,
+html.light .lmb-caisse .border-amber-500\/50 { border-color: var(--lmb-amber-600); }
+html.light .lmb-caisse .hover\:bg-amber-500:hover { background-color: var(--lmb-amber-600); }
+html.light .lmb-caisse .hover\:bg-amber-500\/20:hover { background-color: color-mix(in oklab, var(--lmb-amber-600) 20%, transparent); }
+
+/* Badge "VIP" du ticket de caisse (ReceiptModal) : mêmes couleurs que le
+   badge VIP déjà retinté sur l'écran de Caisse lui-même (rose = premium). */
+html.light .lmb-caisse .border-amber-300 { border-color: var(--lmb-accent-300); }
+html.light .lmb-caisse .bg-amber-100 { background-color: var(--lmb-accent-100); }
+html.light .lmb-caisse .text-amber-800 { color: var(--lmb-accent-700); }
+html.light .lmb-caisse .from-amber-600 { --tw-gradient-from: var(--lmb-accent-300); }
+html.light .lmb-caisse .to-yellow-500 { --tw-gradient-to: var(--lmb-accent-600); }
+
+/* Ardoise (panneaux neutres, textes secondaires, champs partagés
+   Input/Select) -> tons neutres crème/encre de la maquette */
+html.light .lmb-caisse .bg-slate-900,
+html.light .lmb-caisse .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-caisse .bg-slate-950\/40,
+html.light .lmb-caisse .bg-slate-950\/50,
+html.light .lmb-caisse .bg-slate-950\/60 { background-color: var(--lmb-bg); }
+html.light .lmb-caisse .bg-slate-700 { background-color: var(--lmb-border); }
+html.light .lmb-caisse .hover\:bg-slate-800:hover { background-color: var(--lmb-accent-50); }
+html.light .lmb-caisse .bg-slate-100\/80 { background-color: var(--lmb-bg); }
+html.light .lmb-caisse .border-slate-700,
+html.light .lmb-caisse .border-slate-700\/60,
+html.light .lmb-caisse .border-slate-600,
+html.light .lmb-caisse .border-slate-800,
+html.light .lmb-caisse .border-slate-200,
+html.light .lmb-caisse .border-gray-700 { border-color: var(--lmb-border); }
+html.light .lmb-caisse .text-slate-200,
+html.light .lmb-caisse .text-slate-700,
+html.light .lmb-caisse .text-slate-950,
+html.light .lmb-caisse .text-gray-200 { color: var(--lmb-ink); }
+html.light .lmb-caisse .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-caisse .text-slate-400,
+html.light .lmb-caisse .text-slate-500 { color: var(--lmb-ink-faint); }
+html.light .lmb-caisse .placeholder-gray-400::placeholder { color: var(--lmb-ink-faint); }
+html.light .lmb-caisse .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-caisse .shadow-slate-950\/30 { --tw-shadow-color: color-mix(in oklab, var(--lmb-ink) 15%, transparent); }
+
+/* Barres de recherche (client/produit) en pilule complète, comme sur la
+   maquette (les autres champs de saisie — prix, téléphone, code promo...
+   gardent leurs coins arrondis actuels, la maquette elle-même ne montre
+   la pilule complète que pour la recherche). */
+html.light .lmb-caisse .lmb-pill {
+  border-radius: 999px;
+}
+
+/* ===== Phase C : Tableau de bord — en-tête, onglets et onglet Stocks =====
+   Même technique que la Phase B : un seul ajout de classe sur le conteneur
+   racine de app/admin/page.tsx (.lmb-dashboard), puis tout le retint se
+   fait ici, actif uniquement en thème clair. Aucune ligne de logique
+   modifiée. Couvre l'ensemble de l'écran : en-tête, bandeau d'onglets,
+   les 4 onglets internes (Stocks & Transferts, Rapports d'Inventaires,
+   Charges & Bilan, Grand Livre des Ventes) et leurs fenêtres modales
+   (détail d'un rapport, nouveau soin). */
+
+html.light .lmb-dashboard {
+  font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+}
+html.light .lmb-dashboard h1,
+html.light .lmb-dashboard h2,
+html.light .lmb-dashboard h3 {
+  font-family: 'Sora', Arial, Helvetica, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Fond de page + texte de base */
+html.light .lmb-dashboard .bg-\[\#F9F9FB\] { background-color: var(--lmb-bg); }
+html.light .lmb-dashboard .text-\[\#111111\] { color: var(--lmb-ink); }
+html.light .lmb-dashboard .text-\[\#111111\]\/75 { color: color-mix(in oklab, var(--lmb-ink) 75%, transparent); }
+html.light .lmb-dashboard .hover\:text-\[\#111111\]:hover { color: var(--lmb-ink); }
+html.light .lmb-dashboard .selection\:bg-\[\#D4AF37\]\/30 { background-color: color-mix(in oklab, var(--lmb-accent-500) 30%, transparent); }
+html.light .lmb-dashboard .selection\:text-\[\#111111\] { color: var(--lmb-ink); }
+
+/* Or -> rose pastel (en-tête, logo, dégradés, onglet actif) */
+html.light .lmb-dashboard .bg-\[\#111111\],
+html.light .lmb-dashboard .bg-\[\#111111\]\/95 { background-color: var(--lmb-card); }
+html.light .lmb-dashboard .bg-\[\#F3F4F6\] { background-color: var(--lmb-bg); }
+html.light .lmb-dashboard .border-\[\#D4AF37\]\/20,
+html.light .lmb-dashboard .border-\[\#D4AF37\]\/30 { border-color: var(--lmb-accent-300); }
+html.light .lmb-dashboard .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-dashboard .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
+html.light .lmb-dashboard .shadow-\[\#D4AF37\]\/20,
+html.light .lmb-dashboard .shadow-\[\#D4AF37\]\/25 { --tw-shadow-color: color-mix(in oklab, var(--lmb-accent-500) 20%, transparent); }
+/* Logo (icône) : dégradé clair -> moyen -> pâle */
+html.light .lmb-dashboard .from-\[\#D4AF37\] { --tw-gradient-from: var(--lmb-accent-300); }
+html.light .lmb-dashboard .via-\[\#C5A059\] { --tw-gradient-via: var(--lmb-accent-500); }
+html.light .lmb-dashboard .to-\[\#F5E3B3\] { --tw-gradient-to: var(--lmb-accent-100); }
+/* Titre "LMBS - DIRECTION GENERALE" (texte en dégradé) : pâle -> moyen -> foncé */
+html.light .lmb-dashboard .from-\[\#F5E3B3\] { --tw-gradient-from: var(--lmb-accent-100); }
+html.light .lmb-dashboard .via-\[\#D4AF37\] { --tw-gradient-via: var(--lmb-accent-500); }
+html.light .lmb-dashboard .to-\[\#C5A059\] { --tw-gradient-to: var(--lmb-accent-600); }
+
+/* Cyan / teal (recherche, info, boutons d'action, libellés Abidjan) ->
+   rose pastel pour les boutons d'action et surbrillances, vert sauge pour
+   les libellés/indicateurs positifs. Distinction faite classe par classe
+   (même teinte Tailwind, rôles différents selon le contexte). */
+html.light .lmb-dashboard .from-cyan-500 { --tw-gradient-from: var(--lmb-accent-500); }
+html.light .lmb-dashboard .hover\:from-cyan-400:hover { --tw-gradient-from: var(--lmb-accent-600); }
+html.light .lmb-dashboard .to-teal-300 { --tw-gradient-to: var(--lmb-accent-600); }
+html.light .lmb-dashboard .hover\:bg-cyan-500:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-dashboard .focus\:border-cyan-400:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-dashboard .border-cyan-500\/30,
+html.light .lmb-dashboard .border-cyan-500\/40 { border-color: var(--lmb-accent-300); }
+html.light .lmb-dashboard .text-cyan-300,
+html.light .lmb-dashboard .text-cyan-400 { color: var(--lmb-accent-600); }
+html.light .lmb-dashboard .text-teal-300 { color: var(--lmb-sage-700); }
+html.light .lmb-dashboard .border-teal-500\/30,
+html.light .lmb-dashboard .border-teal-500\/40 { border-color: var(--lmb-sage-500); }
+html.light .lmb-dashboard .bg-teal-500\/20 { background-color: color-mix(in oklab, var(--lmb-sage-500) 20%, transparent); }
+html.light .lmb-dashboard .ring-amber-400 { --tw-ring-color: var(--lmb-accent-500); }
+
+/* Emeraude (succès / écart nul) -> vert sauge */
+html.light .lmb-dashboard .text-emerald-300,
+html.light .lmb-dashboard .text-emerald-400 { color: var(--lmb-sage-700); }
+html.light .lmb-dashboard .border-emerald-500\/30,
+html.light .lmb-dashboard .border-emerald-500\/40 { border-color: var(--lmb-sage-500); }
+html.light .lmb-dashboard .bg-emerald-500\/20 { background-color: color-mix(in oklab, var(--lmb-sage-500) 20%, transparent); }
+html.light .lmb-dashboard .bg-emerald-950\/60 { background-color: var(--lmb-sage-100); }
+
+/* Rose (erreurs, ruptures, écarts négatifs) -> rouge */
+html.light .lmb-dashboard .text-rose-300,
+html.light .lmb-dashboard .text-rose-400 { color: var(--lmb-red-600); }
+html.light .lmb-dashboard .hover\:text-rose-400:hover { color: var(--lmb-red-600); }
+html.light .lmb-dashboard .border-rose-500\/30 { border-color: var(--lmb-red-600); }
+html.light .lmb-dashboard .bg-rose-500 { background-color: var(--lmb-red-600); }
+html.light .lmb-dashboard .bg-rose-500\/20 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+
+/* Ambre (alertes / mise en avant) -> teinte ambre de la maquette */
+html.light .lmb-dashboard .border-amber-400 { border-color: var(--lmb-amber-600); }
+html.light .lmb-dashboard .border-amber-500\/20,
+html.light .lmb-dashboard .border-amber-500\/30,
+html.light .lmb-dashboard .border-amber-500\/40 { border-color: var(--lmb-amber-600); }
+html.light .lmb-dashboard .border-amber-600\/60 { border-color: var(--lmb-amber-600); }
+html.light .lmb-dashboard .bg-amber-500\/10,
+html.light .lmb-dashboard .bg-amber-500\/20 { background-color: color-mix(in oklab, var(--lmb-amber-600) 15%, transparent); }
+
+/* Ardoise (cartes, tableaux, textes secondaires) -> tons crème/encre */
+html.light .lmb-dashboard .bg-slate-900\/90,
+html.light .lmb-dashboard .bg-slate-900,
+html.light .lmb-dashboard .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-dashboard .bg-slate-800 { background-color: var(--lmb-border); }
+html.light .lmb-dashboard .hover\:bg-slate-800\/40:hover,
+html.light .lmb-dashboard .hover\:bg-slate-800\/20:hover { background-color: var(--lmb-accent-50); }
+html.light .lmb-dashboard .border-slate-700,
+html.light .lmb-dashboard .border-slate-600,
+html.light .lmb-dashboard .border-slate-800,
+html.light .lmb-dashboard .border-slate-800\/80,
+html.light .lmb-dashboard .border-gray-700,
+html.light .lmb-dashboard .divide-slate-800\/60 { border-color: var(--lmb-border); }
+html.light .lmb-dashboard .text-slate-100,
+html.light .lmb-dashboard .text-slate-200,
+html.light .lmb-dashboard .text-slate-950 { color: var(--lmb-ink); }
+html.light .lmb-dashboard .hover\:text-slate-950:hover,
+html.light .lmb-dashboard .hover\:text-slate-200:hover { color: var(--lmb-ink); }
+html.light .lmb-dashboard .text-slate-300,
+html.light .lmb-dashboard .text-slate-600 { color: var(--lmb-ink-soft); }
+html.light .lmb-dashboard .text-slate-400,
+html.light .lmb-dashboard .text-slate-500 { color: var(--lmb-ink-faint); }
+
+/* Compléments Phase C (détails repérés lors de la relecture systématique) */
+html.light .lmb-dashboard .text-amber-400 { color: var(--lmb-amber-600); }
+html.light .lmb-dashboard .hover\:border-slate-500:hover { border-color: var(--lmb-accent-300); }
+html.light .lmb-dashboard .placeholder-amber-500\/50::placeholder { color: color-mix(in oklab, var(--lmb-amber-600) 60%, transparent); }
+
+/* ===== Phase C (complément 15/09) : Tableau de bord — Vue d'ensemble =====
+   Nouvel onglet par défaut de /admin (KPI, graphique SVG d'évolution des
+   ventes, donut stock par boutique, dernières transactions). Mêmes teintes
+   que le reste de la Phase C (cyan -> accent), plus quelques classes
+   utilitaires supplémentaires (pilule de période active, anneaux/traits du
+   graphique SVG) qui n'apparaissaient pas encore ailleurs dans ce fichier. */
+html.light .lmb-dashboard .bg-cyan-600 { background-color: var(--lmb-accent-600); }
+html.light .lmb-dashboard .bg-cyan-500\/10 { background-color: color-mix(in oklab, var(--lmb-accent-500) 10%, transparent); }
+html.light .lmb-dashboard .bg-cyan-100 { background-color: var(--lmb-accent-100); }
+html.light .lmb-dashboard .stroke-cyan-100 { stroke: var(--lmb-accent-100); }
+html.light .lmb-dashboard .stroke-cyan-600 { stroke: var(--lmb-accent-600); }
+html.light .lmb-dashboard .fill-slate-900 { fill: var(--lmb-card); }
+html.light .lmb-dashboard .stroke-slate-800 { stroke: var(--lmb-border); }
+html.light .lmb-dashboard .hover\:text-cyan-200:hover { color: var(--lmb-accent-700); }
+html.light .lmb-dashboard .lmb-chart-stop-start,
+html.light .lmb-dashboard .lmb-chart-stop-end { stop-color: var(--lmb-accent-600); }
+html.light .lmb-dashboard .border-slate-900 { border-color: var(--lmb-card); }
+
+
+/* ===== Phase D : CRM Clients — nouvelle identité visuelle (thème clair) =====
+   Même technique que les Phases B/C : un seul ajout de classe (.lmb-customers)
+   sur le conteneur racine de app/admin/customers/page.tsx, aucune autre
+   modification de logique. Le thème sombre reste strictement inchangé.
+   Cet écran utilisait déjà le même vocabulaire de couleurs Tailwind que la
+   Caisse et le Tableau de bord (cyan, émeraude, ambre, rose, ardoise) : on
+   retinte donc vers la même palette, avec les mêmes rôles déjà établis. */
+html.light .lmb-customers {
+  font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+}
+html.light .lmb-customers h1,
+html.light .lmb-customers h2,
+html.light .lmb-customers h3 {
+  font-family: 'Sora', Arial, Helvetica, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Fond de page + cartes */
+html.light .lmb-customers .bg-\[\#0A0F1D\] { background-color: var(--lmb-bg); }
+html.light .lmb-customers .bg-slate-900\/90,
+html.light .lmb-customers .bg-slate-900,
+html.light .lmb-customers .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-customers .bg-slate-950\/50,
+html.light .lmb-customers .bg-slate-900\/70 { background-color: var(--lmb-bg); }
+html.light .lmb-customers .bg-slate-700 { background-color: var(--lmb-border); }
+
+/* Composants partagés (Input/Select/Textarea/PrimaryButton/SecondaryButton) :
+   le fond blanc / texte sombre est déjà géré par les règles générales plus
+   haut dans ce fichier (.bg-[#111111]/.bg-[#1A1A1A]/.text-white) ; on ne
+   retinte ici que l'accent or -> couleur d'accent (bouton, focus). */
+html.light .lmb-customers .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-customers .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-customers .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-customers .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-customers .border-gray-700 { border-color: var(--lmb-border); }
+
+/* Bordures */
+html.light .lmb-customers .border-slate-800,
+html.light .lmb-customers .border-slate-700 { border-color: var(--lmb-border); }
+html.light .lmb-customers .divide-slate-800\/80 { border-color: var(--lmb-border); }
+
+/* Textes */
+html.light .lmb-customers .text-slate-100,
+html.light .lmb-customers .text-slate-200,
+html.light .lmb-customers .text-slate-950,
+html.light .lmb-customers .text-white { color: var(--lmb-ink); }
+html.light .lmb-customers .text-slate-300,
+html.light .lmb-customers .text-slate-600 { color: var(--lmb-ink-soft); }
+html.light .lmb-customers .text-slate-400,
+html.light .lmb-customers .text-slate-500 { color: var(--lmb-ink-faint); }
+html.light .lmb-customers .text-cyan-300,
+html.light .lmb-customers .text-cyan-400 { color: var(--lmb-accent-600); }
+html.light .lmb-customers .hover\:text-cyan-300:hover,
+html.light .lmb-customers .hover\:text-cyan-200:hover { color: var(--lmb-accent-700); }
+html.light .lmb-customers .text-emerald-300,
+html.light .lmb-customers .text-emerald-400 { color: var(--lmb-sage-700); }
+html.light .lmb-customers .text-amber-300,
+html.light .lmb-customers .text-amber-400 { color: var(--lmb-amber-600); }
+html.light .lmb-customers .text-rose-300 { color: var(--lmb-red-600); }
+
+/* Bouton "Tableau de bord" (dégradé cyan -> sarcelle) et interactions */
+html.light .lmb-customers .from-cyan-500 { --tw-gradient-from: var(--lmb-accent-500); }
+html.light .lmb-customers .to-teal-300 { --tw-gradient-to: var(--lmb-accent-600); }
+html.light .lmb-customers .shadow-cyan-500\/20 { --tw-shadow-color: color-mix(in oklab, var(--lmb-accent-500) 20%, transparent); }
+html.light .lmb-customers .hover\:bg-slate-800\/40:hover { background-color: var(--lmb-accent-50); }
+html.light .lmb-customers .hover\:border-cyan-500\/60:hover { border-color: var(--lmb-accent-500); }
+
+/* Badges de statut VIP (tableau + fiche détail), alignés sur la maquette :
+   Standard -> vert sauge, VIP -> ambre, VIP Premium -> violet pâle. Ces
+   classes ne sont utilisées nulle part ailleurs dans cet écran, donc ce
+   retint ne touche que les badges. */
+html.light .lmb-customers .bg-slate-100\/80 { background-color: var(--lmb-sage-100); }
+html.light .lmb-customers .text-slate-700 { color: var(--lmb-sage-700); }
+html.light .lmb-customers .border-slate-200 { border-color: var(--lmb-sage-500); }
+html.light .lmb-customers .bg-amber-100 { background-color: var(--lmb-amber-100); }
+html.light .lmb-customers .text-amber-800 { color: var(--lmb-amber-600); }
+html.light .lmb-customers .border-amber-300 { border-color: var(--lmb-amber-600); }
+html.light .lmb-customers .from-amber-600 { --tw-gradient-from: #EFE7F7; }
+html.light .lmb-customers .to-yellow-500 { --tw-gradient-to: #EFE7F7; }
+/* Réajustement (17/09, demandé par vous) : bordure du badge VIP Premium distincte du badge VIP. Les deux badges partageaient la classe Tailwind border-amber-300, donc un simple retint de couleur ne pouvait pas les distinguer ; une classe-marqueur sans effet Tailwind (vip-premium-badge) a été ajoutée au badge VIP Premium dans le code (aucune classe de couleur/thème sombre modifiée). */
+html.light .lmb-customers .vip-premium-badge.border-amber-300 { border-color: var(--lmb-violet-500); }
+
+/* Arrière-plan de la fenêtre modale (fiche cliente) : volontairement laissé
+   sombre même en thème clair, comme pour les modales de la Caisse et du
+   Tableau de bord (traitement standard d'un arrière-plan de modale). */
+
+/* ===== Phase E : Grille Tarifaire & Codes promo — nouvelle identité visuelle
+   (thème clair) =====
+   Même technique que les Phases B/C/D : un seul ajout de classe
+   (.lmb-pricing) sur le conteneur racine (le <main>) de
+   app/admin/pricing/page.tsx, aucune autre modification de logique. Le
+   thème sombre reste strictement inchangé. Cet écran réutilise le même
+   vocabulaire de couleurs Tailwind que les écrans déjà migrés (cyan,
+   émeraude, ambre, rose, ardoise) : on retinte donc vers la même palette,
+   avec les mêmes rôles déjà établis.
+   Note : app/admin/promotions/page.tsx n'est qu'une redirection technique
+   vers cette page (aucune interface propre) — rien à migrer là-bas.
+   Note : le halo noir semi-transparent affiché pendant l'upload d'une
+   photo produit (bg-black/60) est volontairement laissé inchangé, comme
+   les arrière-plans de fenêtres modales dans les autres écrans. */
+
+/* Cartes et fonds */
+html.light .lmb-pricing .bg-slate-900\/80 { background-color: var(--lmb-card); }
+html.light .lmb-pricing .bg-slate-950\/50 { background-color: var(--lmb-bg); }
+html.light .lmb-pricing .bg-slate-800 { background-color: var(--lmb-border); }
+html.light .lmb-pricing .bg-slate-700 { background-color: var(--lmb-border); }
+
+/* Bordures */
+html.light .lmb-pricing .border-slate-800,
+html.light .lmb-pricing .border-slate-700 { border-color: var(--lmb-border); }
+html.light .lmb-pricing .divide-slate-800\/60 { border-color: var(--lmb-border); }
+html.light .lmb-pricing .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-pricing .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-pricing .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-pricing .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-pricing .border-gray-700 { border-color: var(--lmb-border); }
+
+/* Textes neutres */
+html.light .lmb-pricing .text-slate-100 { color: var(--lmb-ink); }
+html.light .lmb-pricing .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-pricing .text-slate-400,
+html.light .lmb-pricing .text-slate-500 { color: var(--lmb-ink-faint); }
+html.light .lmb-pricing .hover\:text-rose-300:hover { color: var(--lmb-red-600); }
+
+/* Cyan / or -> couleur d'accent */
+html.light .lmb-pricing .text-cyan-300,
+html.light .lmb-pricing .text-cyan-400 { color: var(--lmb-accent-600); }
+html.light .lmb-pricing .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
+html.light .lmb-pricing .hover\:bg-slate-800\/40:hover { background-color: var(--lmb-accent-50); }
+
+/* Émeraude -> vert sauge (marge positive, code promo actif, valeur de remise) */
+html.light .lmb-pricing .text-emerald-300,
+html.light .lmb-pricing .text-emerald-400 { color: var(--lmb-sage-700); }
+html.light .lmb-pricing .bg-emerald-500\/15 { background-color: color-mix(in oklab, var(--lmb-sage-500) 15%, transparent); }
+
+/* Rose -> rouge (prix incohérent, marge négative, erreurs de saisie) */
+html.light .lmb-pricing .border-rose-500,
+html.light .lmb-pricing .border-rose-500\/40,
+html.light .lmb-pricing .border-rose-500\/60 { border-color: var(--lmb-red-600); }
+html.light .lmb-pricing .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-pricing .text-rose-200,
+html.light .lmb-pricing .text-rose-300,
+html.light .lmb-pricing .text-rose-400 { color: var(--lmb-red-600); }
+
+/* Ambre -> ambre (alertes de chargement, champ vide, icône promotions) */
+html.light .lmb-pricing .border-amber-500\/30,
+html.light .lmb-pricing .border-amber-600\/60 { border-color: var(--lmb-amber-600); }
+html.light .lmb-pricing .bg-amber-500\/5 { background-color: color-mix(in oklab, var(--lmb-amber-600) 5%, transparent); }
+html.light .lmb-pricing .text-amber-200,
+html.light .lmb-pricing .text-amber-300,
+html.light .lmb-pricing .text-amber-400 { color: var(--lmb-amber-600); }
+html.light .lmb-pricing .placeholder-amber-500\/50::placeholder { color: color-mix(in oklab, var(--lmb-amber-600) 60%, transparent); }
+
+/* ===== Phase F : Comptabilité / Finance — nouvelle identité visuelle
+   (thème clair) =====
+   Même technique que les Phases B/C/D/E : un seul ajout de classe
+   (.lmb-finance) sur le conteneur racine de app/admin/finance/page.tsx,
+   aucune autre modification de logique. Le thème sombre reste strictement
+   inchangé.
+   Nouveauté sur cet écran : le violet (utilisé pour les « paiements mixtes »
+   et le mode « Mobile Money »), absent des phases précédentes. La maquette
+   d'origine n'a pas de violet dans sa palette ; on réutilise donc le violet
+   pâle déjà choisi pour le badge VIP Premium (Phase D) avec une nouvelle
+   variante plus soutenue pour le texte/les barres, ajoutée au même endroit
+   que les autres couleurs de la charte (--lmb-violet-100/500/600). */
+
+/* Fond de page + cartes */
+html.light .lmb-finance .bg-\[\#0A0F1D\] { background-color: var(--lmb-bg); }
+html.light .lmb-finance .bg-slate-900\/90,
+html.light .lmb-finance .bg-slate-900\/80,
+html.light .lmb-finance .bg-slate-900\/70,
+html.light .lmb-finance .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-finance .bg-slate-950\/50,
+html.light .lmb-finance .bg-slate-950\/40 { background-color: var(--lmb-bg); }
+html.light .lmb-finance .bg-slate-800 { background-color: var(--lmb-border); }
+html.light .lmb-finance .shadow-slate-950\/20 { --tw-shadow-color: color-mix(in oklab, var(--lmb-ink) 10%, transparent); }
+
+/* Bordures */
+html.light .lmb-finance .border-slate-800,
+html.light .lmb-finance .border-slate-700 { border-color: var(--lmb-border); }
+
+/* Textes neutres */
+html.light .lmb-finance .text-slate-100,
+html.light .lmb-finance .text-slate-200 { color: var(--lmb-ink); }
+html.light .lmb-finance .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-finance .text-slate-400 { color: var(--lmb-ink-faint); }
+
+/* Cyan -> couleur d'accent (CA total, mode de paiement Espèces/CB) */
+html.light .lmb-finance .text-cyan-300 { color: var(--lmb-accent-600); }
+html.light .lmb-finance .border-cyan-500\/30 { border-color: var(--lmb-accent-300); }
+html.light .lmb-finance .bg-cyan-500\/10 { background-color: color-mix(in oklab, var(--lmb-accent-500) 10%, transparent); }
+html.light .lmb-finance .text-cyan-200 { color: var(--lmb-accent-700); }
+html.light .lmb-finance .bg-cyan-400 { background-color: var(--lmb-accent-500); }
+
+/* Émeraude -> vert sauge (Espèces) */
+html.light .lmb-finance .border-emerald-500\/30 { border-color: var(--lmb-sage-500); }
+html.light .lmb-finance .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-finance .text-emerald-200 { color: var(--lmb-sage-700); }
+html.light .lmb-finance .bg-emerald-400 { background-color: var(--lmb-sage-500); }
+
+/* Violet -> nouvelle teinte violette de la charte (Mobile Money, paiements mixtes) */
+html.light .lmb-finance .border-violet-500\/30 { border-color: var(--lmb-violet-500); }
+html.light .lmb-finance .bg-violet-500\/10 { background-color: color-mix(in oklab, var(--lmb-violet-600) 10%, transparent); }
+html.light .lmb-finance .text-violet-200 { color: var(--lmb-violet-600); }
+html.light .lmb-finance .bg-violet-400 { background-color: var(--lmb-violet-500); }
+
+/* Rose -> rouge (Total Dépenses, erreurs de chargement) */
+html.light .lmb-finance .border-rose-500\/30,
+html.light .lmb-finance .border-rose-500\/40 { border-color: var(--lmb-red-600); }
+html.light .lmb-finance .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-finance .text-rose-200 { color: var(--lmb-red-600); }
+
+/* Ambre -> ambre aligné sur la maquette (Bénéfice théorique, dépenses en attente, marge estimée) */
+html.light .lmb-finance .border-amber-500\/30,
+html.light .lmb-finance .border-amber-500\/40 { border-color: var(--lmb-amber-600); }
+html.light .lmb-finance .bg-amber-500\/10 { background-color: color-mix(in oklab, var(--lmb-amber-600) 10%, transparent); }
+html.light .lmb-finance .bg-amber-500\/5 { background-color: color-mix(in oklab, var(--lmb-amber-600) 5%, transparent); }
+html.light .lmb-finance .text-amber-200,
+html.light .lmb-finance .text-amber-300 { color: var(--lmb-amber-600); }
+html.light .lmb-finance .text-amber-200\/90 { color: var(--lmb-amber-600); }
+html.light .lmb-finance .bg-amber-400 { background-color: var(--lmb-amber-600); }
+
+/* Ardoise (barre neutre "Autres") */
+html.light .lmb-finance .bg-slate-400 { background-color: var(--lmb-ink-faint); }
+
+/* Or -> couleur d'accent (boutons PrimaryButton/SecondaryButton partages : selecteur de
+   periode, boutons d'export) — mapping oublie au premier passage, corrige suite a votre
+   capture d'ecran (bouton « Aujourd'hui » reste dore). */
+html.light .lmb-finance .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-finance .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-finance .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-finance .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-finance .border-gray-700 { border-color: var(--lmb-border); }
+
+/* ===== Phase G : Achats & Fournisseurs — nouvelle identité visuelle
+   (thème clair) =====
+   Même technique que les phases precedentes : un seul ajout de classe
+   (.lmb-purchases) sur le conteneur racine de app/admin/purchases/page.tsx,
+   aucune autre modification de logique. Le thème sombre reste strictement
+   inchangé.
+   Particularite de cet ecran, decouverte en le preparant : contrairement
+   aux autres, il melangeait deja deux styles avant ce chantier — un en-tete
+   et une premiere carte ecrits avec les anciennes couleurs claires en dur
+   (#F9F9FB/#111111/#D4AF37, un vestige du tout premier theme clair), et le
+   reste de l'ecran (selection fournisseur, bon de commande, suivi des
+   commandes) ecrit en ardoise/cyan classique comme la Caisse ou le Tableau
+   de bord. On retinte les deux styles vers la meme palette pour que
+   l'ecran soit visuellement homogene une fois en thème clair — sans rien
+   changer au thème sombre existant, qui garde exactement son aspect actuel
+   (potentiellement déjà un peu heterogene lui aussi, mais c'est l'etat
+   d'origine, non modifie ici).
+   Nouveaute : les vignettes produits utilisent une 6e teinte, « fuchsia »,
+   absente de la maquette et de la charte deja posee. Plutot que d'inventer
+   une couleur isolee, on reutilise le rose original de la maquette
+   (celui remplace par le bleu acier comme couleur d'accent, cf. plus haut
+   dans ce document) — il n'etait plus utilise nulle part ailleurs, ce qui
+   evite toute collision et garde une palette cohérente avec le reste du
+   chantier. */
+
+/* Fond de page + cartes */
+html.light .lmb-purchases .bg-\[\#F9F9FB\] { background-color: var(--lmb-bg); }
+html.light .lmb-purchases .text-\[\#F9F9FB\] { color: var(--lmb-ink); }
+html.light .lmb-purchases .text-\[\#111111\] { color: var(--lmb-ink); }
+html.light .lmb-purchases .text-\[\#444444\] { color: var(--lmb-ink-soft); }
+html.light .lmb-purchases .bg-\[\#111111\] { background-color: var(--lmb-card); }
+html.light .lmb-purchases .bg-slate-900,
+html.light .lmb-purchases .bg-slate-950 { background-color: var(--lmb-card); }
+
+/* Or -> couleur d'accent (en-tete, carte "Nouveau fournisseur", boutons
+   PrimaryButton partages, champs au focus) */
+html.light .lmb-purchases .text-\[\#C5A059\] { color: var(--lmb-accent-600); }
+html.light .lmb-purchases .border-\[\#D4AF37\]\/20,
+html.light .lmb-purchases .border-\[\#D4AF37\]\/30 { border-color: var(--lmb-accent-300); }
+html.light .lmb-purchases .shadow-\[\#D4AF37\]\/10 { --tw-shadow-color: color-mix(in oklab, var(--lmb-accent-500) 10%, transparent); }
+html.light .lmb-purchases .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-purchases .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-purchases .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-purchases .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-purchases .border-gray-700 { border-color: var(--lmb-border); }
+
+/* Bordures et textes neutres */
+html.light .lmb-purchases .border-slate-800,
+html.light .lmb-purchases .border-slate-700 { border-color: var(--lmb-border); }
+html.light .lmb-purchases .hover\:border-slate-500:hover { border-color: var(--lmb-accent-300); }
+html.light .lmb-purchases .text-slate-100 { color: var(--lmb-ink); }
+html.light .lmb-purchases .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-purchases .text-slate-400,
+html.light .lmb-purchases .text-slate-500 { color: var(--lmb-ink-faint); }
+html.light .lmb-purchases .bg-slate-800 { background-color: var(--lmb-border); }
+html.light .lmb-purchases .bg-slate-950\/60 { background-color: var(--lmb-bg); }
+
+/* Cyan -> couleur d'accent (total du bon de commande, filtres de gamme,
+   numero de commande) */
+html.light .lmb-purchases .text-cyan-300,
+html.light .lmb-purchases .text-cyan-200 { color: var(--lmb-accent-700); }
+html.light .lmb-purchases .border-cyan-400 { border-color: var(--lmb-accent-500); }
+html.light .lmb-purchases .bg-cyan-500\/20 { background-color: color-mix(in oklab, var(--lmb-accent-500) 20%, transparent); }
+html.light .lmb-purchases .ring-cyan-400 { --tw-ring-color: var(--lmb-accent-500); }
+
+/* Rose/Ambre -> rouge/ambre (retirer un article, badge "en attente de
+   reception", statut ORDERED) */
+html.light .lmb-purchases .text-rose-400 { color: var(--lmb-red-600); }
+html.light .lmb-purchases .text-amber-300 { color: var(--lmb-amber-600); }
+html.light .lmb-purchases .bg-amber-500 { background-color: var(--lmb-amber-600); }
+html.light .lmb-purchases .text-slate-950 { color: var(--lmb-ink); }
+
+/* Badges de statut de commande (DRAFT/ORDERED/RECEIVED) */
+html.light .lmb-purchases .bg-slate-600 { background-color: var(--lmb-border); }
+html.light .lmb-purchases .bg-emerald-600 { background-color: var(--lmb-sage-700); }
+
+/* Vignettes produits (6 teintes cycliques, degrades + bordure) */
+html.light .lmb-purchases .from-cyan-500\/20 { --tw-gradient-from: color-mix(in oklab, var(--lmb-accent-500) 20%, transparent); }
+html.light .lmb-purchases .to-cyan-500\/5 { --tw-gradient-to: color-mix(in oklab, var(--lmb-accent-500) 5%, transparent); }
+html.light .lmb-purchases .border-cyan-500\/40 { border-color: var(--lmb-accent-300); }
+html.light .lmb-purchases .from-fuchsia-500\/20 { --tw-gradient-from: color-mix(in oklab, var(--lmb-pink-500) 20%, transparent); }
+html.light .lmb-purchases .to-fuchsia-500\/5 { --tw-gradient-to: color-mix(in oklab, var(--lmb-pink-500) 5%, transparent); }
+html.light .lmb-purchases .border-fuchsia-500\/40 { border-color: var(--lmb-pink-300); }
+html.light .lmb-purchases .from-amber-500\/20 { --tw-gradient-from: color-mix(in oklab, var(--lmb-amber-600) 20%, transparent); }
+html.light .lmb-purchases .to-amber-500\/5 { --tw-gradient-to: color-mix(in oklab, var(--lmb-amber-600) 5%, transparent); }
+html.light .lmb-purchases .border-amber-500\/40 { border-color: var(--lmb-amber-600); }
+html.light .lmb-purchases .from-emerald-500\/20 { --tw-gradient-from: color-mix(in oklab, var(--lmb-sage-500) 20%, transparent); }
+html.light .lmb-purchases .to-emerald-500\/5 { --tw-gradient-to: color-mix(in oklab, var(--lmb-sage-500) 5%, transparent); }
+html.light .lmb-purchases .border-emerald-500\/40 { border-color: var(--lmb-sage-500); }
+html.light .lmb-purchases .from-violet-500\/20 { --tw-gradient-from: color-mix(in oklab, var(--lmb-violet-600) 20%, transparent); }
+html.light .lmb-purchases .to-violet-500\/5 { --tw-gradient-to: color-mix(in oklab, var(--lmb-violet-600) 5%, transparent); }
+html.light .lmb-purchases .border-violet-500\/40 { border-color: var(--lmb-violet-500); }
+html.light .lmb-purchases .from-rose-500\/20 { --tw-gradient-from: color-mix(in oklab, var(--lmb-red-600) 20%, transparent); }
+html.light .lmb-purchases .to-rose-500\/5 { --tw-gradient-to: color-mix(in oklab, var(--lmb-red-600) 5%, transparent); }
+html.light .lmb-purchases .border-rose-500\/40 { border-color: var(--lmb-red-600); }
+
+
+
+
+/* ===== Phase H : Registre RH — nouvelle identité visuelle (thème clair) =====
+   Même technique que les phases précédentes : un seul ajout de classe
+   (.lmb-hr) sur le conteneur racine de app/admin/hr/page.tsx, aucune autre
+   modification de logique. Le thème sombre reste strictement inchangé.
+   Écran entièrement composé des couleurs déjà posées dans la charte
+   (ardoise/cyan/émeraude/rose/ambre + or des boutons partagés) : aucune
+   nouvelle famille de couleur nécessaire ici. Mappings gold/boutons partagés
+   inclus dès ce premier passage (leçon de la Phase E/F). */
+
+/* Fond de page + cartes */
+html.light .lmb-hr .bg-slate-900\/80,
+html.light .lmb-hr .bg-slate-900,
+html.light .lmb-hr .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-hr .bg-slate-950\/40,
+html.light .lmb-hr .bg-slate-950\/60 { background-color: var(--lmb-bg); }
+html.light .lmb-hr .bg-slate-700 { background-color: var(--lmb-border); }
+html.light .lmb-hr .hover\:bg-slate-800\/40:hover { background-color: var(--lmb-accent-50); }
+html.light .lmb-hr .bg-slate-800\/60 { background-color: var(--lmb-accent-100); }
+
+/* Bordures */
+html.light .lmb-hr .border-slate-800,
+html.light .lmb-hr .border-slate-700 { border-color: var(--lmb-border); }
+html.light .lmb-hr .divide-slate-800\/60 { border-color: var(--lmb-border); }
+
+/* Textes neutres */
+html.light .lmb-hr .text-slate-100,
+html.light .lmb-hr .text-slate-200 { color: var(--lmb-ink); }
+html.light .lmb-hr .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-hr .text-slate-400,
+html.light .lmb-hr .text-slate-500 { color: var(--lmb-ink-faint); }
+html.light .lmb-hr .hover\:text-white:hover { color: var(--lmb-ink); }
+
+/* Cyan -> couleur d'accent (rôle, liens Modifier/PDF/Marquer payé, icônes) */
+html.light .lmb-hr .text-cyan-300,
+html.light .lmb-hr .text-cyan-400 { color: var(--lmb-accent-600); }
+
+/* Émeraude -> vert sauge (statuts actif/payé, heures, montants nets) */
+html.light .lmb-hr .text-emerald-200,
+html.light .lmb-hr .text-emerald-300 { color: var(--lmb-sage-700); }
+html.light .lmb-hr .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-hr .bg-emerald-500\/15 { background-color: color-mix(in oklab, var(--lmb-sage-500) 15%, transparent); }
+html.light .lmb-hr .border-emerald-500\/40 { border-color: var(--lmb-sage-500); }
+
+/* Rose -> rouge (erreurs, statut LATE, badges) */
+html.light .lmb-hr .text-rose-200,
+html.light .lmb-hr .text-rose-300,
+html.light .lmb-hr .text-rose-400 { color: var(--lmb-red-600); }
+html.light .lmb-hr .border-rose-500\/40 { border-color: var(--lmb-red-600); }
+html.light .lmb-hr .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-hr .bg-rose-500\/15 { background-color: color-mix(in oklab, var(--lmb-red-600) 15%, transparent); }
+
+/* Ambre -> ambre aligné sur la maquette (statut Congé/PENDING, avertissement taux) */
+html.light .lmb-hr .text-amber-300 { color: var(--lmb-amber-600); }
+html.light .lmb-hr .text-amber-200\/90 { color: var(--lmb-amber-600); }
+html.light .lmb-hr .border-amber-500\/30 { border-color: var(--lmb-amber-600); }
+html.light .lmb-hr .bg-amber-500\/5 { background-color: color-mix(in oklab, var(--lmb-amber-600) 5%, transparent); }
+html.light .lmb-hr .bg-amber-500\/15 { background-color: color-mix(in oklab, var(--lmb-amber-600) 15%, transparent); }
+
+/* Or -> couleur d'accent (icônes de titres, onglet actif, boutons partagés,
+   champs au focus) */
+html.light .lmb-hr .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
+html.light .lmb-hr .from-\[\#D4AF37\] { --tw-gradient-from: var(--lmb-accent-300); }
+html.light .lmb-hr .to-\[\#C5A059\] { --tw-gradient-to: var(--lmb-accent-600); }
+html.light .lmb-hr .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-hr .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-hr .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-hr .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-hr .border-gray-700 { border-color: var(--lmb-border); }
+html.light .lmb-hr .placeholder-gray-400::placeholder { color: var(--lmb-ink-faint); }
+
+/* ===== Phase I : Comptes Marchands — nouvelle identité visuelle (thème clair) =====
+   Même technique que les phases précédentes : un seul ajout de classe
+   (.lmb-merchant) sur le conteneur racine de app/admin/merchant-accounts/page.tsx,
+   aucune autre modification de logique. Le thème sombre reste strictement
+   inchangé. Écran entièrement composé des couleurs déjà posées dans la charte
+   (ardoise/cyan/émeraude/rose/ambre + or des boutons partagés) : aucune
+   nouvelle famille de couleur nécessaire ici. Mappings gold/boutons partagés
+   inclus dès ce premier passage (méthode adoptée depuis la Phase G). */
+
+/* Fond de page + cartes */
+html.light .lmb-merchant .bg-slate-900\/80,
+html.light .lmb-merchant .bg-slate-900\/70,
+html.light .lmb-merchant .bg-slate-900,
+html.light .lmb-merchant .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-merchant .bg-slate-950\/60 { background-color: var(--lmb-bg); }
+
+/* Bordures */
+html.light .lmb-merchant .border-slate-800,
+html.light .lmb-merchant .border-slate-700,
+html.light .lmb-merchant .border-slate-700\/60,
+html.light .lmb-merchant .border-slate-600 { border-color: var(--lmb-border); }
+html.light .lmb-merchant .divide-slate-800\/60 { border-color: var(--lmb-border); }
+
+/* Textes neutres */
+html.light .lmb-merchant .text-slate-100,
+html.light .lmb-merchant .text-slate-200 { color: var(--lmb-ink); }
+html.light .lmb-merchant .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-merchant .text-slate-400,
+html.light .lmb-merchant .text-slate-500 { color: var(--lmb-ink-faint); }
+
+/* Cyan -> couleur d'accent (bandeau "Direction • Trésorerie") */
+html.light .lmb-merchant .text-cyan-300 { color: var(--lmb-accent-600); }
+
+/* Émeraude -> vert sauge (ventes encaissées, rapprochement OK) */
+html.light .lmb-merchant .text-emerald-200,
+html.light .lmb-merchant .text-emerald-300 { color: var(--lmb-sage-700); }
+html.light .lmb-merchant .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-merchant .border-emerald-500\/40 { border-color: var(--lmb-sage-500); }
+
+/* Rose -> rouge (erreurs, retraits, écarts détectés) */
+html.light .lmb-merchant .text-rose-200,
+html.light .lmb-merchant .text-rose-300 { color: var(--lmb-red-600); }
+html.light .lmb-merchant .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-merchant .border-rose-500\/40,
+html.light .lmb-merchant .border-rose-500\/50 { border-color: var(--lmb-red-600); }
+
+/* Ambre -> ambre aligné sur la maquette (relevés manquants, diagnostics) */
+html.light .lmb-merchant .text-amber-300 { color: var(--lmb-amber-600); }
+html.light .lmb-merchant .text-amber-200 { color: var(--lmb-amber-600); }
+html.light .lmb-merchant .text-amber-100\/90 { color: var(--lmb-amber-600); }
+html.light .lmb-merchant .bg-amber-500\/5 { background-color: color-mix(in oklab, var(--lmb-amber-600) 5%, transparent); }
+html.light .lmb-merchant .border-amber-500\/30,
+html.light .lmb-merchant .border-amber-500\/40 { border-color: var(--lmb-amber-600); }
+
+/* Or -> couleur d'accent (icônes de titres, onglet actif, boutons partagés,
+   champs au focus) */
+html.light .lmb-merchant .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
+html.light .lmb-merchant .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-merchant .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-merchant .border-\[\#D4AF37\] { border-color: var(--lmb-accent-500); }
+html.light .lmb-merchant .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-merchant .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-merchant .border-gray-700 { border-color: var(--lmb-border); }
+html.light .lmb-merchant .placeholder-gray-400::placeholder { color: var(--lmb-ink-faint); }
+
+/* ===== Phase J.1 : Comparatif Boutiques — nouvelle identité visuelle
+   (thème clair) =====
+   Même technique que les phases précédentes : un seul ajout de classe
+   (.lmb-comparative) sur le conteneur racine de app/admin/comparative/page.tsx,
+   aucune autre modification de logique. Le thème sombre reste strictement
+   inchangé. Écran entièrement composé des couleurs déjà posées dans la charte
+   (ardoise/cyan/émeraude/rose/ambre + or des boutons partagés) : aucune
+   nouvelle famille de couleur nécessaire. Mappings gold/boutons partagés et
+   du composant partagé EstimationBadge (border-amber-500/40, bg-amber-500/10)
+   inclus dès ce premier passage. */
+
+/* Fond de page + cartes */
+html.light .lmb-comparative .bg-slate-900\/80,
+html.light .lmb-comparative .bg-slate-900\/70,
+html.light .lmb-comparative .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-comparative .bg-slate-950\/50 { background-color: var(--lmb-bg); }
+html.light .lmb-comparative .shadow-slate-950\/20 { --tw-shadow-color: color-mix(in oklab, var(--lmb-ink) 10%, transparent); }
+
+/* Bordures */
+html.light .lmb-comparative .border-slate-800,
+html.light .lmb-comparative .border-slate-700 { border-color: var(--lmb-border); }
+html.light .lmb-comparative .divide-slate-800\/60 { border-color: var(--lmb-border); }
+
+/* Textes neutres */
+html.light .lmb-comparative .text-slate-100,
+html.light .lmb-comparative .text-slate-200 { color: var(--lmb-ink); }
+html.light .lmb-comparative .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-comparative .text-slate-400,
+html.light .lmb-comparative .text-slate-500 { color: var(--lmb-ink-faint); }
+
+/* Cyan -> couleur d'accent */
+html.light .lmb-comparative .text-cyan-300 { color: var(--lmb-accent-600); }
+
+/* Émeraude -> vert sauge (résultat net positif, écart favorable) */
+html.light .lmb-comparative .text-emerald-200,
+html.light .lmb-comparative .text-emerald-300 { color: var(--lmb-sage-700); }
+html.light .lmb-comparative .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-comparative .border-emerald-500\/40 { border-color: var(--lmb-sage-500); }
+
+/* Rose -> rouge (résultat net négatif, écart défavorable, erreurs) */
+html.light .lmb-comparative .text-rose-200,
+html.light .lmb-comparative .text-rose-300 { color: var(--lmb-red-600); }
+html.light .lmb-comparative .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-comparative .border-rose-500\/40 { border-color: var(--lmb-red-600); }
+
+/* Ambre -> ambre aligné sur la maquette (données non rattachées, badge "estimation") */
+html.light .lmb-comparative .text-amber-300 { color: var(--lmb-amber-600); }
+html.light .lmb-comparative .text-amber-200\/90 { color: var(--lmb-amber-600); }
+html.light .lmb-comparative .border-amber-500\/30,
+html.light .lmb-comparative .border-amber-500\/40 { border-color: var(--lmb-amber-600); }
+html.light .lmb-comparative .bg-amber-500\/5 { background-color: color-mix(in oklab, var(--lmb-amber-600) 5%, transparent); }
+html.light .lmb-comparative .bg-amber-500\/10 { background-color: color-mix(in oklab, var(--lmb-amber-600) 10%, transparent); }
+
+/* Or -> couleur d'accent (icône de titre, boutons partagés, champs au focus) */
+html.light .lmb-comparative .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
+html.light .lmb-comparative .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-comparative .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-comparative .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-comparative .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-comparative .border-gray-700 { border-color: var(--lmb-border); }
+
+/* ===== Phase J.2 : Inventaires & Audits — nouvelle identité visuelle (thème clair) =====
+   Même technique que les phases précédentes : un seul ajout de classe
+   (.lmb-audits) sur le conteneur racine de app/admin/audits/page.tsx, aucune
+   autre modification de logique. Le thème sombre reste strictement inchangé.
+   Écran "à l'ancienne" (comme la Grille tarifaire/Achats) : le conteneur
+   racine et l'en-tête utilisent encore l'ancien style écrit en dur
+   (bg-[#F9F9FB]/text-[#111111]/bordures or), déjà couverts pour la plupart
+   par les règles globales existantes (bg-[#F9F9FB], bg-[#111111],
+   text-[#F5E3B3]) ; seules les nuances propres à cet écran sont ajoutées ici.
+   Le corps de la page (cartes actives/historique) reprend le style classique
+   ardoise/cyan/émeraude/rose/ambre déjà posé sur les autres écrans. Mappings
+   gold/boutons/champs partagés (Input, Select, PrimaryButton, SecondaryButton)
+   inclus dès ce premier passage (méthode adoptée depuis la Phase G). */
+
+/* Texte sur fond clair d'origine (racine + bouton "Tableau de bord") */
+html.light .lmb-audits .text-\[\#111111\] { color: var(--lmb-ink); }
+
+/* Or -> couleur d'accent (en-tête, icônes, séparateur, bouton dégradé,
+   ombre du bouton, boutons/champs partagés) */
+html.light .lmb-audits .border-\[\#D4AF37\]\/20,
+html.light .lmb-audits .border-\[\#D4AF37\]\/30 { border-color: var(--lmb-accent-300); }
+html.light .lmb-audits .bg-\[\#D4AF37\]\/40 { background-color: color-mix(in oklab, var(--lmb-accent-500) 40%, transparent); }
+html.light .lmb-audits .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
+html.light .lmb-audits .hover\:text-\[\#D4AF37\]:hover { color: var(--lmb-accent-600); }
+html.light .lmb-audits .from-\[\#D4AF37\] { --tw-gradient-from: var(--lmb-accent-300); }
+html.light .lmb-audits .to-\[\#C5A059\] { --tw-gradient-to: var(--lmb-accent-600); }
+html.light .lmb-audits .shadow-\[\#D4AF37\]\/20 { --tw-shadow-color: color-mix(in oklab, var(--lmb-accent-500) 20%, transparent); }
+html.light .lmb-audits .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-audits .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-audits .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-audits .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-audits .border-gray-700 { border-color: var(--lmb-border); }
+html.light .lmb-audits .placeholder-gray-400::placeholder { color: var(--lmb-ink-faint); }
+
+/* Fond de page + cartes (corps classique) */
+html.light .lmb-audits .bg-slate-900\/80,
+html.light .lmb-audits .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-audits .bg-slate-950\/50 { background-color: var(--lmb-bg); }
+
+/* Bordures */
+html.light .lmb-audits .border-slate-800,
+html.light .lmb-audits .border-slate-700 { border-color: var(--lmb-border); }
+html.light .lmb-audits .divide-slate-800 { border-color: var(--lmb-border); }
+html.light .lmb-audits .hover\:border-slate-700:hover { border-color: var(--lmb-border); }
+html.light .lmb-audits .hover\:bg-slate-800\/40:hover { background-color: var(--lmb-accent-50); }
+
+/* Textes neutres */
+html.light .lmb-audits .text-slate-200 { color: var(--lmb-ink); }
+html.light .lmb-audits .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-audits .text-slate-400,
+html.light .lmb-audits .text-slate-500 { color: var(--lmb-ink-faint); }
+
+/* Cyan -> couleur d'accent (libellés "Audit actif"/"Site"/"Créé par",
+   audit sélectionné dans l'historique) */
+html.light .lmb-audits .text-cyan-300 { color: var(--lmb-accent-600); }
+html.light .lmb-audits .border-cyan-500 { border-color: var(--lmb-accent-500); }
+html.light .lmb-audits .bg-cyan-500\/5 { background-color: color-mix(in oklab, var(--lmb-accent-500) 5%, transparent); }
+
+/* Émeraude -> vert sauge (écart positif) */
+html.light .lmb-audits .text-emerald-300 { color: var(--lmb-sage-700); }
+
+/* Rose -> rouge (écart négatif) */
+html.light .lmb-audits .text-rose-300 { color: var(--lmb-red-600); }
+
+/* Ambre -> ambre aligné sur la maquette (statut, variance, icône historique) */
+html.light .lmb-audits .text-amber-300,
+html.light .lmb-audits .text-amber-400 { color: var(--lmb-amber-600); }
+
+/* ===== Phase J.3 : Stocks & Transferts — nouvelle identité visuelle (thème clair) =====
+   Deux écrans (app/admin/transfers/page.tsx et app/admin/inventory/page.tsx)
+   correspondant à une seule maquette (StocksTransferts.dc.html). Même
+   technique que les phases précédentes : un seul ajout de classe par écran
+   (.lmb-transfers / .lmb-inventory) sur son conteneur racine, aucune autre
+   modification de logique. Le thème sombre reste strictement inchangé.
+   Écrans "à l'ancienne" (comme la Grille tarifaire/Achats/Inventaires) :
+   racine et cadre de carte encore en ancien style écrit en dur, déjà
+   couverts pour la plupart par les règles globales existantes. Le corps
+   (badges de statut, tableaux) reprend le style classique
+   ardoise/cyan/émeraude/rose/ambre déjà posé sur les autres écrans. Le
+   statut "MIXED/INCOHÉRENT" (orange, propre à cet écran) est aligné sur la
+   même teinte ambre que les autres avertissements, faute d'équivalent
+   "orange" dans la maquette. Mappings gold/boutons/champs partagés inclus
+   dès ce premier passage (méthode adoptée depuis la Phase G). La superposition
+   sombre des modales (bg-slate-950/80) n'est volontairement pas retintée,
+   comme pour toutes les autres modales déjà migrées (CRM Clients, etc.). */
+
+/* ===== .lmb-transfers (app/admin/transfers/page.tsx) ===== */
+
+html.light .lmb-transfers .text-\[\#111111\] { color: var(--lmb-ink); }
+html.light .lmb-transfers .text-\[\#C5A059\] { color: var(--lmb-accent-600); }
+html.light .lmb-transfers .border-\[\#D4AF37\]\/20 { border-color: var(--lmb-accent-300); }
+html.light .lmb-transfers .border-\[\#D4AF37\]\/30 { border-color: var(--lmb-accent-300); }
+html.light .lmb-transfers .bg-\[\#D4AF37\]\/10 { background-color: color-mix(in oklab, var(--lmb-accent-500) 10%, transparent); }
+html.light .lmb-transfers .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-transfers .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-transfers .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-transfers .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-transfers .border-gray-700 { border-color: var(--lmb-border); }
+
+html.light .lmb-transfers .border-slate-800 { border-color: var(--lmb-border); }
+html.light .lmb-transfers .border-slate-800\/60 { border-color: var(--lmb-border); }
+html.light .lmb-transfers .bg-slate-950\/40 { background-color: var(--lmb-bg); }
+html.light .lmb-transfers .border-slate-700 { border-color: var(--lmb-border); }
+html.light .lmb-transfers .hover\:border-slate-500:hover { border-color: var(--lmb-accent-300); }
+html.light .lmb-transfers .text-slate-300 { color: var(--lmb-ink-soft); }
+
+html.light .lmb-transfers .text-cyan-300 { color: var(--lmb-accent-600); }
+
+/* Statuts (badges) */
+html.light .lmb-transfers .text-amber-300 { color: var(--lmb-amber-600); }
+html.light .lmb-transfers .border-amber-500\/30 { border-color: var(--lmb-amber-600); }
+html.light .lmb-transfers .bg-amber-500\/10 { background-color: color-mix(in oklab, var(--lmb-amber-600) 10%, transparent); }
+html.light .lmb-transfers .text-emerald-300 { color: var(--lmb-sage-700); }
+html.light .lmb-transfers .border-emerald-500\/30 { border-color: var(--lmb-sage-500); }
+html.light .lmb-transfers .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-transfers .text-rose-300 { color: var(--lmb-red-600); }
+html.light .lmb-transfers .border-rose-500\/30,
+html.light .lmb-transfers .border-rose-500\/40 { border-color: var(--lmb-red-600); }
+html.light .lmb-transfers .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-transfers .text-orange-300 { color: var(--lmb-amber-600); }
+html.light .lmb-transfers .border-orange-500\/40 { border-color: var(--lmb-amber-600); }
+html.light .lmb-transfers .bg-orange-500\/10 { background-color: color-mix(in oklab, var(--lmb-amber-600) 10%, transparent); }
+
+/* ===== .lmb-inventory (app/admin/inventory/page.tsx + TransferModal) ===== */
+
+html.light .lmb-inventory .text-\[\#111111\] { color: var(--lmb-ink); }
+html.light .lmb-inventory .text-\[\#C5A059\] { color: var(--lmb-accent-600); }
+html.light .lmb-inventory .border-\[\#D4AF37\]\/10,
+html.light .lmb-inventory .border-\[\#D4AF37\]\/20 { border-color: var(--lmb-accent-300); }
+html.light .lmb-inventory .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-inventory .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-inventory .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-inventory .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-inventory .border-gray-700 { border-color: var(--lmb-border); }
+
+/* Badges de seuil de stock */
+html.light .lmb-inventory .text-rose-300 { color: var(--lmb-red-600); }
+html.light .lmb-inventory .border-rose-500\/30 { border-color: var(--lmb-red-600); }
+html.light .lmb-inventory .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-inventory .text-amber-300 { color: var(--lmb-amber-600); }
+html.light .lmb-inventory .border-amber-500\/30 { border-color: var(--lmb-amber-600); }
+html.light .lmb-inventory .bg-amber-500\/10 { background-color: color-mix(in oklab, var(--lmb-amber-600) 10%, transparent); }
+html.light .lmb-inventory .text-emerald-300 { color: var(--lmb-sage-700); }
+html.light .lmb-inventory .border-emerald-500\/30 { border-color: var(--lmb-sage-500); }
+html.light .lmb-inventory .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+
+/* Modale "Nouveau transfert" (TransferModal, affichée dans .lmb-inventory) */
+html.light .lmb-inventory .bg-slate-900 { background-color: var(--lmb-card); }
+html.light .lmb-inventory .text-slate-400 { color: var(--lmb-ink-faint); }
+html.light .lmb-inventory .bg-rose-600 { background-color: var(--lmb-red-600); }
+
+/* ===== Phase K : Prestataires + Vidéosurveillance — nouvelle identité visuelle (thème clair) =====
+   Deux petits écrans Direction uniquement. Même technique que les phases
+   précédentes : un seul ajout de classe par écran (.lmb-providers /
+   .lmb-surveillance) sur son conteneur racine, aucune autre modification de
+   logique. Le thème sombre reste strictement inchangé.
+   Particularité de ces deux écrans : aucune ancienne couleur claire en dur
+   (contrairement aux Achats/Inventaires & Audits/Stocks & Transferts) —
+   entièrement écrits dans le style ardoise/cyan/émeraude/rose/ambre + or déjà
+   connu, comme le Registre RH ou les Comptes Marchands. Aucune nouvelle
+   famille de couleur nécessaire ; conforme aux maquettes Prestataires.dc.html
+   (statuts Payé/Dû/Partiel en sauge/rouge/ambre) et Videosurveillance.dc.html
+   (bandeau d'avertissement ambre, statuts "Bloquant" en rouge). Mappings
+   gold/boutons/champs partagés inclus dès ce premier passage (méthode
+   adoptée depuis la Phase G). */
+
+/* ===== .lmb-providers (app/admin/service-providers/page.tsx) ===== */
+
+html.light .lmb-providers .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
+html.light .lmb-providers .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-providers .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-providers .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-providers .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-providers .border-gray-700 { border-color: var(--lmb-border); }
+html.light .lmb-providers .placeholder-gray-400::placeholder { color: var(--lmb-ink-faint); }
+
+html.light .lmb-providers .text-cyan-300,
+html.light .lmb-providers .text-cyan-400 { color: var(--lmb-accent-600); }
+
+html.light .lmb-providers .border-slate-800,
+html.light .lmb-providers .border-slate-700 { border-color: var(--lmb-border); }
+html.light .lmb-providers .divide-slate-800\/60 { border-color: var(--lmb-border); }
+html.light .lmb-providers .bg-slate-900\/80,
+html.light .lmb-providers .bg-slate-900\/60,
+html.light .lmb-providers .bg-slate-900,
+html.light .lmb-providers .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-providers .bg-slate-950\/40 { background-color: var(--lmb-bg); }
+html.light .lmb-providers .bg-slate-700 { background-color: var(--lmb-border); }
+html.light .lmb-providers .hover\:bg-slate-800\/40:hover { background-color: var(--lmb-accent-50); }
+html.light .lmb-providers .bg-slate-800\/60 { background-color: var(--lmb-accent-100); }
+
+html.light .lmb-providers .text-slate-100,
+html.light .lmb-providers .text-slate-200 { color: var(--lmb-ink); }
+html.light .lmb-providers .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-providers .text-slate-400,
+html.light .lmb-providers .text-slate-500 { color: var(--lmb-ink-faint); }
+
+html.light .lmb-providers .text-emerald-300 { color: var(--lmb-sage-700); }
+
+html.light .lmb-providers .border-rose-500\/40 { border-color: var(--lmb-red-600); }
+html.light .lmb-providers .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-providers .text-rose-200,
+html.light .lmb-providers .text-rose-300 { color: var(--lmb-red-600); }
+
+/* ===== .lmb-surveillance (app/admin/surveillance/page.tsx) ===== */
+
+html.light .lmb-surveillance .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
+html.light .lmb-surveillance .accent-\[\#D4AF37\] { accent-color: var(--lmb-accent-500); }
+html.light .lmb-surveillance .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-surveillance .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-surveillance .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-surveillance .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-surveillance .border-gray-700 { border-color: var(--lmb-border); }
+html.light .lmb-surveillance .placeholder-gray-400::placeholder { color: var(--lmb-ink-faint); }
+
+html.light .lmb-surveillance .text-cyan-300 { color: var(--lmb-accent-600); }
+
+html.light .lmb-surveillance .border-slate-800 { border-color: var(--lmb-border); }
+html.light .lmb-surveillance .bg-slate-900\/70 { background-color: var(--lmb-card); }
+html.light .lmb-surveillance .text-slate-400,
+html.light .lmb-surveillance .text-slate-500 { color: var(--lmb-ink-faint); }
+
+html.light .lmb-surveillance .border-amber-500\/30 { border-color: var(--lmb-amber-600); }
+html.light .lmb-surveillance .bg-amber-500\/10 { background-color: color-mix(in oklab, var(--lmb-amber-600) 10%, transparent); }
+html.light .lmb-surveillance .text-amber-100,
+html.light .lmb-surveillance .text-amber-200\/90 { color: var(--lmb-amber-600); }
+
+html.light .lmb-surveillance .border-emerald-500\/40 { border-color: var(--lmb-sage-500); }
+html.light .lmb-surveillance .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-surveillance .text-emerald-200,
+html.light .lmb-surveillance .text-emerald-400 { color: var(--lmb-sage-700); }
+
+html.light .lmb-surveillance .border-rose-500\/40 { border-color: var(--lmb-red-600); }
+html.light .lmb-surveillance .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-surveillance .text-rose-200,
+html.light .lmb-surveillance .text-rose-400 { color: var(--lmb-red-600); }
+
+/* ===== Phase L : Connexion — nouvelle identité visuelle (thème clair) =====
+   Dernier écran du chantier. Même technique que les phases précédentes : un
+   seul ajout de classe (.lmb-login) sur le conteneur racine, aucune autre
+   modification de logique. Le thème sombre reste strictement inchangé. Cet
+   écran est accessible avant même la connexion : le thème mémorisé la
+   dernière fois sur cet appareil s'applique déjà ici, comme sur le reste de
+   l'application.
+   Particularité : cet écran est plus simple que la maquette
+   Connexion.dc.html, qui ajoute un badge « LM », une case « Rester
+   connecté », un lien « Mot de passe oublié ? » et 3 petites cartes de
+   rôles — aucun de ces éléments n'existe dans le code actuel (pas de
+   fonction de réinitialisation de mot de passe, pas d'option « rester
+   connecté » côté connexion). Comme sur toutes les phases précédentes, je
+   n'ai ajouté aucune fonctionnalité qui n'existait pas déjà : seules les
+   couleurs et la forme du bouton (pilule, comme sur la maquette, via la
+   même classe lmb-pill déjà utilisée en Caisse) ont été retintées. */
+html.light .lmb-login {
+  font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+}
+html.light .lmb-login h1,
+html.light .lmb-login h2,
+html.light .lmb-login h3 {
+  font-family: 'Sora', Arial, Helvetica, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+html.light .lmb-login .border-gray-700 { border-color: var(--lmb-border); }
+html.light .lmb-login .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+html.light .lmb-login .placeholder-gray-400::placeholder { color: var(--lmb-ink-faint); }
+html.light .lmb-login .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-login .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+
+html.light .lmb-login .bg-slate-950 { background-color: var(--lmb-bg); }
+html.light .lmb-login .border-slate-800 { border-color: var(--lmb-border); }
+html.light .lmb-login .bg-slate-900 { background-color: var(--lmb-card); }
+html.light .lmb-login .shadow-slate-950\/40 { --tw-shadow-color: color-mix(in oklab, var(--lmb-ink) 20%, transparent); }
+
+html.light .lmb-login .text-emerald-400 { color: var(--lmb-sage-700); }
+html.light .lmb-login .text-slate-200 { color: var(--lmb-ink); }
+
+html.light .lmb-login .border-red-500\/30 { border-color: var(--lmb-red-600); }
+html.light .lmb-login .bg-red-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-login .text-red-300 { color: var(--lmb-red-600); }
+
+html.light .lmb-login .lmb-pill { border-radius: 9999px; }
+
+/* ===== Phase L (relecture d'ensemble) : cohérence des polices Sora / Plus
+   Jakarta Sans sur tous les écrans déjà migrés =====
+   Constaté en relisant systématiquement tous les écrans avant de clore ce
+   chantier : la bascule de police posée pour les tout premiers écrans
+   migrés (.lmb-caisse, .lmb-dashboard, .lmb-customers — Phases B/C/D)
+   n'avait pas été reprise sur les phases suivantes. Un oubli qui n'a rien à
+   voir avec les couleurs : ces 11 écrans, une fois en thème clair, gardaient
+   la police Arial de l'ancienne application au lieu de Sora/Plus Jakarta
+   Sans comme sur la maquette. Rien d'autre ne change : mêmes règles, même
+   technique, appliquées d'un coup aux 11 conteneurs déjà en place. */
+html.light .lmb-pricing,
+html.light .lmb-finance,
+html.light .lmb-purchases,
+html.light .lmb-hr,
+html.light .lmb-merchant,
+html.light .lmb-comparative,
+html.light .lmb-audits,
+html.light .lmb-transfers,
+html.light .lmb-inventory,
+html.light .lmb-providers,
+html.light .lmb-surveillance {
+  font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+}
+html.light .lmb-pricing h1, html.light .lmb-pricing h2, html.light .lmb-pricing h3,
+html.light .lmb-finance h1, html.light .lmb-finance h2, html.light .lmb-finance h3,
+html.light .lmb-purchases h1, html.light .lmb-purchases h2, html.light .lmb-purchases h3,
+html.light .lmb-hr h1, html.light .lmb-hr h2, html.light .lmb-hr h3,
+html.light .lmb-merchant h1, html.light .lmb-merchant h2, html.light .lmb-merchant h3,
+html.light .lmb-comparative h1, html.light .lmb-comparative h2, html.light .lmb-comparative h3,
+html.light .lmb-audits h1, html.light .lmb-audits h2, html.light .lmb-audits h3,
+html.light .lmb-transfers h1, html.light .lmb-transfers h2, html.light .lmb-transfers h3,
+html.light .lmb-inventory h1, html.light .lmb-inventory h2, html.light .lmb-inventory h3,
+html.light .lmb-providers h1, html.light .lmb-providers h2, html.light .lmb-providers h3,
+html.light .lmb-surveillance h1, html.light .lmb-surveillance h2, html.light .lmb-surveillance h3 {
+  font-family: 'Sora', Arial, Helvetica, sans-serif;
+  letter-spacing: -0.01em;
+}

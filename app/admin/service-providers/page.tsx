@@ -180,7 +180,7 @@ export default function ServiceProvidersPage() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="mx-auto max-w-6xl px-6 py-8 lmb-providers">
       <div className="mb-6 flex items-center gap-3">
         <SecondaryButton
           href="/admin"

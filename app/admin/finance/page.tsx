@@ -146,7 +146,7 @@ export default function FinancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F1D] text-slate-100">
+    <div className="min-h-screen bg-[#0A0F1D] text-slate-100 lmb-finance">
       <header className="border-b border-slate-800 bg-slate-900/90 px-6 py-4 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">

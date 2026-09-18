@@ -35,7 +35,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 lmb-login">
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-2xl shadow-slate-950/40">
         <div className="mb-8 text-center">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-emerald-400">LMB POS</p>
@@ -82,7 +82,7 @@ export default function LoginPage() {
           <PrimaryButton
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl lmb-pill disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? 'Connexion…' : 'Se connecter'}
           </PrimaryButton>

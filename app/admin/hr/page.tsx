@@ -74,7 +74,7 @@ export default function HrPage() {
   const [section, setSection] = useState<Section>('STAFF');
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="mx-auto max-w-6xl px-6 py-8 lmb-hr">
       <div className="mb-6 flex items-center gap-3">
         <SecondaryButton
           href="/admin"

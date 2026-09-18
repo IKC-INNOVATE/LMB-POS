@@ -31,7 +31,7 @@ const fmtDateTime = (iso: string) =>
 
 export default function SurveillancePage() {
   return (
-    <main className="mx-auto max-w-4xl px-6 py-8">
+    <main className="mx-auto max-w-4xl px-6 py-8 lmb-surveillance">
       <div className="mb-6 flex items-center gap-3">
         <SecondaryButton
           href="/admin"

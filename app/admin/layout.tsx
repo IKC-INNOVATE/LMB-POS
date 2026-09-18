@@ -1,6 +1,6 @@
  // app/admin/layout.tsx
 import React from 'react';
-import AdminTopNav from '../../components/admin/AdminTopNav';
+import AppSidebar from '../../components/admin/AppSidebar';
 import AuthGuard from '../../components/auth/AuthGuard';
 
 export const metadata = {
@@ -15,10 +15,11 @@ export default function AdminLayout({
 }) {
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#0A0F1D] text-slate-100">
-        <AdminTopNav />
-
-        {children}
+      <div className="min-h-screen bg-[#0A0F1D] text-slate-100 flex">
+        <AppSidebar />
+        <div className="flex-1 min-w-0">
+          {children}
+        </div>
       </div>
     </AuthGuard>
   );

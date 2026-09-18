@@ -212,7 +212,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 print:hidden">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 print:hidden lmb-caisse">
         <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/30">
             <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
             <h3 className="text-lg font-bold text-white">Ticket de caisse</h3>

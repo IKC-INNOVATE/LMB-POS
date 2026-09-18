@@ -79,7 +79,7 @@ export default function MerchantAccountsPage() {
   const storeParam: StoreCode | null = storeFilter === 'ALL' ? null : storeFilter;
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="mx-auto max-w-6xl px-6 py-8 lmb-merchant">
       <div className="mb-6 flex items-center gap-3">
         <SecondaryButton
           href="/admin"
@@ -357,23 +357,23 @@ function BalancesSection({
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-[10px] uppercase text-slate-500">
-                <th className="py-2">Date</th>
-                <th className="py-2">Boutique</th>
-                <th className="py-2">Plateforme</th>
-                <th className="py-2 text-right">Solde</th>
-                <th className="py-2">Saisi par</th>
-                <th className="py-2">Note</th>
+                <th className="py-2 pr-3">Date</th>
+                <th className="py-2 px-3">Boutique</th>
+                <th className="py-2 px-3">Plateforme</th>
+                <th className="py-2 px-3 text-right">Solde</th>
+                <th className="py-2 px-3">Saisi par</th>
+                <th className="py-2 pl-3">Note</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {history.map((h) => (
                 <tr key={h.id} className="text-slate-200">
-                  <td className="py-2">{formatDate(h.observed_at)}</td>
-                  <td className="py-2">{h.store_code}</td>
-                  <td className="py-2">{PLATFORM_LABEL[h.platform]}</td>
-                  <td className="py-2 text-right font-mono">{formatMoney(h.balance_xof)}</td>
-                  <td className="py-2 text-slate-400">{h.recorded_by}</td>
-                  <td className="py-2 text-slate-500">{h.note ?? '—'}</td>
+                  <td className="py-2 pr-3">{formatDate(h.observed_at)}</td>
+                  <td className="py-2 px-3">{h.store_code}</td>
+                  <td className="py-2 px-3">{PLATFORM_LABEL[h.platform]}</td>
+                  <td className="py-2 px-3 text-right font-mono">{formatMoney(h.balance_xof)}</td>
+                  <td className="py-2 px-3 text-slate-400">{h.recorded_by}</td>
+                  <td className="py-2 pl-3 text-slate-500">{h.note ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -575,25 +575,25 @@ function WithdrawalsSection({
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-[10px] uppercase text-slate-500">
-                <th className="py-2">Date</th>
-                <th className="py-2">Boutique</th>
-                <th className="py-2">Plateforme</th>
-                <th className="py-2 text-right">Montant</th>
-                <th className="py-2">Réf. bancaire</th>
-                <th className="py-2">Saisi par</th>
-                <th className="py-2">Note</th>
+                <th className="py-2 pr-3">Date</th>
+                <th className="py-2 px-3">Boutique</th>
+                <th className="py-2 px-3">Plateforme</th>
+                <th className="py-2 px-3 text-right">Montant</th>
+                <th className="py-2 px-3">Réf. bancaire</th>
+                <th className="py-2 px-3">Saisi par</th>
+                <th className="py-2 pl-3">Note</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {rows.map((r) => (
                 <tr key={r.id} className="text-slate-200">
-                  <td className="py-2">{formatDate(r.transfer_date)}</td>
-                  <td className="py-2">{r.store_code}</td>
-                  <td className="py-2">{PLATFORM_LABEL[r.platform]}</td>
-                  <td className="py-2 text-right font-mono">{formatMoney(r.amount_xof)}</td>
-                  <td className="py-2 text-slate-400">{r.bank_reference ?? '—'}</td>
-                  <td className="py-2 text-slate-400">{r.recorded_by}</td>
-                  <td className="py-2 text-slate-500">{r.note ?? '—'}</td>
+                  <td className="py-2 pr-3">{formatDate(r.transfer_date)}</td>
+                  <td className="py-2 px-3">{r.store_code}</td>
+                  <td className="py-2 px-3">{PLATFORM_LABEL[r.platform]}</td>
+                  <td className="py-2 px-3 text-right font-mono">{formatMoney(r.amount_xof)}</td>
+                  <td className="py-2 px-3 text-slate-400">{r.bank_reference ?? '—'}</td>
+                  <td className="py-2 px-3 text-slate-400">{r.recorded_by}</td>
+                  <td className="py-2 pl-3 text-slate-500">{r.note ?? '—'}</td>
                 </tr>
               ))}
             </tbody>

@@ -29,7 +29,7 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9FB] px-6 py-8 text-[#111111]">
+    <div className="min-h-screen bg-[#F9F9FB] px-6 py-8 text-[#111111] lmb-inventory">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <p className="text-[11px] uppercase tracking-[0.22em] text-[#C5A059]">Inventory</p>
