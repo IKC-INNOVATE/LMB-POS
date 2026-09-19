@@ -7,6 +7,7 @@ import {
   resolveUnitCost,
   type RawRecord,
 } from '@/lib/services/cost';
+import { normalizeStore, type StoreKey } from '@/lib/services/store-comparison';
 
 export type FinancialPeriodFilter = 'TODAY' | 'LAST_7_DAYS' | 'THIS_MONTH';
 
@@ -61,7 +62,15 @@ const getSalesTotal = (sale: RawRecord): number => {
   return parseNumber(rawValue);
 };
 
-export async function getFinancialOverview(startDate: string, endDate: string): Promise<FinancialOverview> {
+/**
+ * @param storeFilter Boutique unique ('DAKAR' | 'ABIDJAN'), ou undefined/null pour
+ *   le réseau entier (comportement historique, inchangé par défaut).
+ */
+export async function getFinancialOverview(
+  startDate: string,
+  endDate: string,
+  storeFilter?: StoreKey | null,
+): Promise<FinancialOverview> {
   const safeStart = new Date(startDate).toISOString();
   const safeEnd = new Date(endDate).toISOString();
 
@@ -98,8 +107,33 @@ export async function getFinancialOverview(startDate: string, endDate: string): 
     );
   }
 
-  const sales = (salesResult.data ?? []) as RawRecord[];
-  const expenses = (expensesResult.data ?? []) as RawRecord[];
+  const allSales = (salesResult.data ?? []) as RawRecord[];
+  let expenses = (expensesResult.data ?? []) as RawRecord[];
+
+  // Filtre boutique (ventes) : même logique de normalisation que le Comparatif
+  // Boutiques (`store_name` -> 'DAKAR' | 'ABIDJAN' | null), pour rester
+  // cohérent avec cet écran plutôt que de filtrer côté requête sur une valeur
+  // dont la casse/espacement réels en base ne sont pas garantis.
+  const sales = storeFilter
+    ? allSales.filter((sale) => normalizeStore(sale.store_name) === storeFilter)
+    : allSales;
+
+  // Filtre boutique (dépenses de caisse) : `lmb_register_expenses` n'a pas de
+  // colonne boutique directe — elle est rattachée à une caisse (`register_id`)
+  // qui, elle, porte `store_code`. On récupère donc les caisses de la
+  // boutique choisie pour ne garder que leurs sorties de caisse.
+  if (storeFilter) {
+    const registersResult = await supabase.from('lmb_registers').select('id').eq('store_code', storeFilter);
+    if (registersResult.error) {
+      console.warn(
+        'getFinancialOverview: lecture des caisses par boutique impossible, dépenses de caisse non filtrées',
+        registersResult.error,
+      );
+    } else {
+      const registerIds = new Set((registersResult.data ?? []).map((r: RawRecord) => r.id));
+      expenses = expenses.filter((expense) => registerIds.has(expense.register_id));
+    }
+  }
 
   // Clé (id OU sku, en minuscules) -> coût d'achat réel > 0.
   const costByKey = buildCostByKey(productsResult.data as RawRecord[] | null);

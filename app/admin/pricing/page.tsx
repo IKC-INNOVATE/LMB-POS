@@ -441,7 +441,7 @@ const emptyForm = {
   discount_type: 'PERCENT' as 'PERCENT' | 'FIXED',
   discount_value: '10',
   min_order_amount: '0',
-  start_date: new Date().toISOString().slice(0, 16),
+  start_date: new Date().toISOString().slice(0, 10),
   end_date: '',
   usage_limit: '0',
 };
@@ -504,8 +504,8 @@ function PromotionsSection() {
         discount_type: form.discount_type,
         discount_value: value,
         min_order_amount: Number(form.min_order_amount || 0),
-        start_date: form.start_date ? new Date(form.start_date).toISOString() : undefined,
-        end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
+        start_date: form.start_date ? new Date(`${form.start_date}T00:00:00`).toISOString() : undefined,
+        end_date: form.end_date ? new Date(`${form.end_date}T23:59:59`).toISOString() : null,
         usage_limit: Number(form.usage_limit || 0) > 0 ? Number(form.usage_limit) : null,
         is_active: true,
       });
@@ -562,7 +562,7 @@ function PromotionsSection() {
               className="rounded-xl uppercase"
             />
           </div>
-          <div>
+          <div className="xl:col-span-2">
             <label className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-slate-400">Type</label>
             <Select
               value={form.discount_type}
@@ -595,7 +595,7 @@ function PromotionsSection() {
               className="rounded-xl"
             />
           </div>
-          <div>
+          <div className="xl:col-span-2">
             <label className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-slate-400">
               Limite d&apos;usage (0 = illimité)
             </label>
@@ -606,21 +606,21 @@ function PromotionsSection() {
               className="rounded-xl"
             />
           </div>
-          <div className="xl:col-span-3">
+          <div className="xl:col-span-2">
             <label className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-slate-400">Début</label>
             <Input
-              type="datetime-local"
+              type="date"
               value={form.start_date}
               onChange={(e) => setField('start_date', e.target.value)}
               className="rounded-xl"
             />
           </div>
-          <div className="xl:col-span-3">
+          <div className="xl:col-span-2">
             <label className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-slate-400">
               Fin (optionnel)
             </label>
             <Input
-              type="datetime-local"
+              type="date"
               value={form.end_date}
               onChange={(e) => setField('end_date', e.target.value)}
               className="rounded-xl"

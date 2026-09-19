@@ -238,6 +238,7 @@ export default function InventoryAuditPage() {
                             type="number"
                             value={Number(item.counted_stock ?? 0)}
                             onChange={(e) => updateCount(item.product_id, Number(e.target.value || 0))}
+                            onFocus={(e) => e.target.select()}
                             className="w-24 px-2 py-1 text-center"
                           />
                         </td>

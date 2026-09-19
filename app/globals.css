@@ -1398,3 +1398,40 @@ html.light .lmb-surveillance h1, html.light .lmb-surveillance h2, html.light .lm
   font-family: 'Sora', Arial, Helvetica, sans-serif;
   letter-spacing: -0.01em;
 }
+
+/* Impression propre (19/09) : le bouton "Impression" (window.print()) imprimait
+   toute la page telle quelle — menu latéral compris — d'où un imprimé
+   surchargé sur plusieurs pages. On isole désormais à l'impression le seul
+   contenu marqué .lmb-print-area (tout le reste, y compris le menu latéral
+   et l'en-tête avec ses boutons, n'étant jamais marqué, reste masqué) ; à
+   l'intérieur d'une zone imprimable, .lmb-print-hide masque en plus un
+   élément précis (ex. le sélecteur de période, inutile sur papier).
+   Fond blanc / texte sombre forcés pour rester lisible quel que soit le
+   thème actif à l'écran (clair ou sombre) au moment de l'impression. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .lmb-print-area,
+  .lmb-print-area * {
+    visibility: visible;
+  }
+  .lmb-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  .lmb-print-hide {
+    display: none !important;
+  }
+  .lmb-print-area,
+  .lmb-print-area * {
+    background: #ffffff !important;
+    color: #111111 !important;
+    box-shadow: none !important;
+  }
+}

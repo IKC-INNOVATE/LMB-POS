@@ -10,17 +10,34 @@ import {
   CalendarRange,
   Download,
   DollarSign,
+  FileDown,
   Printer,
   TrendingUp,
   Wallet,
 } from 'lucide-react';
 import { getFinancialOverview, type FinancialOverview, type FinancialPeriodFilter } from '@/lib/services/finance';
+import { type StoreKey } from '@/lib/services/store-comparison';
+import { downloadFinanceReportPdf } from '@/lib/pdf/finance-report-pdf';
 
 const PERIOD_OPTIONS: Array<{ value: FinancialPeriodFilter; label: string }> = [
   { value: 'TODAY', label: 'Aujourd’hui' },
   { value: 'LAST_7_DAYS', label: '7 derniers jours' },
   { value: 'THIS_MONTH', label: 'Ce mois-ci' },
 ];
+
+export type StoreFilter = StoreKey | 'ALL';
+
+const STORE_OPTIONS: Array<{ value: StoreFilter; label: string }> = [
+  { value: 'ALL', label: 'Toutes les boutiques' },
+  { value: 'DAKAR', label: 'Dakar' },
+  { value: 'ABIDJAN', label: 'Abidjan' },
+];
+
+const STORE_LABELS: Record<StoreFilter, string> = {
+  ALL: 'Toutes les boutiques (Dakar + Abidjan)',
+  DAKAR: 'Dakar',
+  ABIDJAN: 'Abidjan',
+};
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat('fr-FR', {
@@ -61,6 +78,7 @@ const getPeriodRange = (period: FinancialPeriodFilter) => {
 
 export default function FinancePage() {
   const [period, setPeriod] = useState<FinancialPeriodFilter>('TODAY');
+  const [store, setStore] = useState<StoreFilter>('ALL');
   const [overview, setOverview] = useState<FinancialOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +90,7 @@ export default function FinancePage() {
 
       try {
         const range = getPeriodRange(period);
-        const result = await getFinancialOverview(range.startDate, range.endDate);
+        const result = await getFinancialOverview(range.startDate, range.endDate, store === 'ALL' ? null : store);
         setOverview(result);
       } catch (err) {
         console.error('load financial overview', err);
@@ -83,7 +101,7 @@ export default function FinancePage() {
     };
 
     loadOverview();
-  }, [period]);
+  }, [period, store]);
 
   const metrics = useMemo(() => {
     if (!overview) {
@@ -111,6 +129,7 @@ export default function FinancePage() {
     if (!overview) return;
 
     const rows = [
+      ['Boutique', STORE_LABELS[store]],
       ['Période', `${formatDate(overview.startDate)} → ${formatDate(overview.endDate)}`],
       ['Chiffre d’affaires total', String(overview.totalRevenue)],
       ['Nombre de ventes', String(overview.salesCount)],
@@ -130,7 +149,7 @@ export default function FinancePage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `lmb-finance-${period.toLowerCase()}.csv`);
+    link.setAttribute('download', `lmb-finance-${period.toLowerCase()}-${store.toLowerCase()}.csv`);
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -143,6 +162,11 @@ export default function FinancePage() {
     if (typeof window !== 'undefined') {
       window.print();
     }
+  };
+
+  const handleDownloadPdf = () => {
+    if (!overview) return;
+    downloadFinanceReportPdf(overview, period, store);
   };
 
   return (
@@ -173,11 +197,15 @@ export default function FinancePage() {
               <Printer className="h-3.5 w-3.5" />
               Impression
             </SecondaryButton>
+            <SecondaryButton onClick={handleDownloadPdf} className="inline-flex items-center gap-2 text-xs">
+              <FileDown className="h-3.5 w-3.5" />
+              PDF
+            </SecondaryButton>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-6 py-8 lmb-print-area">
         <div className="mb-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-2xl shadow-slate-950/20">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -185,20 +213,38 @@ export default function FinancePage() {
               <h2 className="mt-2 text-xl font-bold text-white">
                 {overview ? `${formatDate(overview.startDate)} → ${formatDate(overview.endDate)}` : 'Chargement…'}
               </h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Boutique : <span className="font-semibold text-slate-200">{STORE_LABELS[store]}</span>
+              </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {PERIOD_OPTIONS.map((option) =>
-                period === option.value ? (
-                  <PrimaryButton key={option.value} onClick={() => setPeriod(option.value)} className="text-xs">
-                    {option.label}
-                  </PrimaryButton>
-                ) : (
-                  <SecondaryButton key={option.value} onClick={() => setPeriod(option.value)} className="text-xs">
-                    {option.label}
-                  </SecondaryButton>
-                )
-              )}
+            <div className="flex flex-col items-start gap-3 lmb-print-hide lg:items-end">
+              <div className="flex flex-wrap gap-2">
+                {PERIOD_OPTIONS.map((option) =>
+                  period === option.value ? (
+                    <PrimaryButton key={option.value} onClick={() => setPeriod(option.value)} className="text-xs">
+                      {option.label}
+                    </PrimaryButton>
+                  ) : (
+                    <SecondaryButton key={option.value} onClick={() => setPeriod(option.value)} className="text-xs">
+                      {option.label}
+                    </SecondaryButton>
+                  )
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {STORE_OPTIONS.map((option) =>
+                  store === option.value ? (
+                    <PrimaryButton key={option.value} onClick={() => setStore(option.value)} className="text-xs">
+                      {option.label}
+                    </PrimaryButton>
+                  ) : (
+                    <SecondaryButton key={option.value} onClick={() => setStore(option.value)} className="text-xs">
+                      {option.label}
+                    </SecondaryButton>
+                  )
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -381,20 +427,20 @@ function SummaryRow({
   estimated?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-950/50 px-3 py-2.5">
-      <span className="flex items-center gap-1.5 text-slate-300">
-        {label}
-        {estimated ? (
-          <span
-            title="Coût d'achat réel non renseigné pour certains produits : marge calculée avec une estimation de coût à 65 % du prix de vente."
-            className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-300"
-          >
-            <AlertTriangle className="h-3 w-3" />
-            estimation
-          </span>
-        ) : null}
-      </span>
-      <span className="font-bold text-white">{value}</span>
+    <div className="flex flex-col gap-1.5 rounded-2xl border border-slate-800 bg-slate-950/50 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="min-w-0 truncate text-slate-300">{label}</span>
+        <span className="shrink-0 font-bold text-white">{value}</span>
+      </div>
+      {estimated ? (
+        <span
+          title="Coût d'achat réel non renseigné pour certains produits : marge calculée avec une estimation de coût à 65 % du prix de vente."
+          className="inline-flex w-fit items-center gap-1 self-start rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-300"
+        >
+          <AlertTriangle className="h-3 w-3" />
+          estimation
+        </span>
+      ) : null}
     </div>
   );
 }
