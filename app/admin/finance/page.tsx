@@ -111,13 +111,14 @@ export default function FinancePage() {
         mobileMoney: 0,
         totalExpenses: 0,
         operatingCharges: 0,
+        payroll: 0,
         theoreticalProfit: 0,
       };
     }
 
     const theoreticalProfit = Math.max(
       0,
-      overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges,
+      overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges - overview.totalPayroll,
     );
 
     return {
@@ -126,6 +127,7 @@ export default function FinancePage() {
       mobileMoney: overview.paymentBreakdown.mobile_money,
       totalExpenses: overview.totalCashExpenses,
       operatingCharges: overview.totalOperatingCharges,
+      payroll: overview.totalPayroll,
       theoreticalProfit,
     };
   }, [overview]);
@@ -145,11 +147,17 @@ export default function FinancePage() {
       ['Acomptes', String(overview.paymentBreakdown.deposit)],
       ['Dépenses de caisse', String(overview.totalCashExpenses)],
       ['Charges d’exploitation', String(overview.totalOperatingCharges)],
+      ['Masse salariale', String(overview.totalPayroll)],
       [overview.grossMarginIsEstimated ? 'Marge brute (partiellement estimée)' : 'Marge brute réelle', String(overview.grossMarginEstimate)],
       ['Part du CA à marge estimée (%)', overview.estimatedRevenueShare.toFixed(1)],
       [
         'Bénéfice théorique',
-        String(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges)),
+        String(
+          Math.max(
+            0,
+            overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges - overview.totalPayroll,
+          ),
+        ),
       ],
     ];
 
@@ -338,10 +346,14 @@ export default function FinancePage() {
                   />
                   <SummaryRow label="Dépenses de caisse" value={formatMoney(overview.totalCashExpenses)} />
                   <SummaryRow label="Charges d’exploitation" value={formatMoney(overview.totalOperatingCharges)} />
+                  <SummaryRow label="Masse salariale" value={formatMoney(overview.totalPayroll)} />
                   <SummaryRow
                     label="Bénéfice théorique"
                     value={formatMoney(
-                      Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges),
+                      Math.max(
+                        0,
+                        overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges - overview.totalPayroll,
+                      ),
                     )}
                     estimated={overview.grossMarginIsEstimated}
                   />

@@ -9,6 +9,7 @@ import {
 } from '@/lib/services/cost';
 import { normalizeStore, type StoreKey } from '@/lib/services/store-comparison';
 import { getTotalCharges } from '@/lib/services/charges';
+import { getTotalPayroll } from '@/lib/services/payroll';
 
 export type FinancialPeriodFilter = 'TODAY' | 'LAST_7_DAYS' | 'THIS_MONTH';
 
@@ -35,6 +36,13 @@ export interface FinancialOverview {
    * Distinct de `totalCashExpenses` (sorties de caisse en espèces).
    */
   totalOperatingCharges: number;
+  /**
+   * Masse salariale chargée (salaire brut + cotisations patronales) des
+   * bulletins de paie déjà générés dans le Registre RH — Phase 6 du
+   * chantier Charges. Voir lib/services/payroll.ts → getTotalPayroll().
+   * Distincte de `totalOperatingCharges` (loyer, électricité...).
+   */
+  totalPayroll: number;
   grossMarginEstimate: number;
   grossMarginRate: number;
   /**
@@ -159,6 +167,18 @@ export async function getFinancialOverview(
     );
   }
 
+  // Masse salariale (Phase 6) : même principe non bloquant — une erreur ici
+  // ne doit pas casser le reste du rapport financier.
+  let totalPayroll = 0;
+  try {
+    totalPayroll = await getTotalPayroll(safeStart.slice(0, 10), safeEnd.slice(0, 10), storeFilter ?? null);
+  } catch (err) {
+    console.warn(
+      'getFinancialOverview: lecture de la masse salariale impossible, ligne ignorée dans le rapport',
+      err,
+    );
+  }
+
   const paymentBreakdown: FinancialPaymentBreakdown = {
     cash: 0,
     mobile_money: 0,
@@ -222,6 +242,7 @@ export async function getFinancialOverview(
     paymentBreakdown,
     totalCashExpenses,
     totalOperatingCharges,
+    totalPayroll,
     grossMarginEstimate,
     grossMarginRate,
     grossMarginIsEstimated,

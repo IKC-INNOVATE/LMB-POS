@@ -326,6 +326,51 @@ export async function listPayslips(employeeId: string): Promise<Payslip[]> {
   return (data ?? []) as Payslip[];
 }
 
+/**
+ * Masse salariale chargée (Phase 6 du chantier Charges d'exploitation) :
+ * somme, sur la période et la boutique choisies, du coût total employeur
+ * de chaque bulletin déjà généré — salaire brut + cotisations patronales
+ * (IPRES employeur + CSS employeur). Ne recalcule rien : lit uniquement
+ * les bulletins déjà générés (voir generatePayslip ci-dessus) — un mois
+ * sans bulletin généré pour un salarié ne compte pour rien, exactement
+ * comme une charge d'exploitation non saisie (lib/services/charges.ts).
+ *
+ * Filtre boutique : via le nouveau champ store_code de la Phase 5
+ * (lmb_payroll_employees), indépendant du compte de connexion.
+ *
+ * @param startDate / endDate au format 'YYYY-MM-DD' — un bulletin compte
+ *   si son period_month (1er du mois du bulletin) tombe dans cet intervalle.
+ */
+export async function getTotalPayroll(
+  startDate: string,
+  endDate: string,
+  storeFilter?: 'DAKAR' | 'ABIDJAN' | null,
+): Promise<number> {
+  let employeeIds: Set<string> | null = null;
+  if (storeFilter) {
+    const { data: employees, error: empError } = await supabase
+      .from('lmb_payroll_employees')
+      .select('id')
+      .eq('store_code', storeFilter);
+    if (empError) throw new Error(empError.message);
+    employeeIds = new Set((employees ?? []).map((e: { id: string }) => e.id));
+    if (employeeIds.size === 0) return 0;
+  }
+
+  const { data: payslips, error } = await supabase
+    .from('lmb_payslips')
+    .select('employee_id, gross_salary_xof, ipres_employer_xof, css_employer_xof, period_month')
+    .gte('period_month', startDate)
+    .lte('period_month', endDate);
+
+  if (error) throw new Error(error.message);
+
+  return (payslips ?? []).reduce((sum, p: { employee_id: string; gross_salary_xof: number; ipres_employer_xof: number; css_employer_xof: number }) => {
+    if (employeeIds && !employeeIds.has(p.employee_id)) return sum;
+    return sum + Number(p.gross_salary_xof || 0) + Number(p.ipres_employer_xof || 0) + Number(p.css_employer_xof || 0);
+  }, 0);
+}
+
 // ---------------------------------------------------------------------
 // VERSEMENTS TRIMESTRIELS DE COTISATIONS
 // ---------------------------------------------------------------------

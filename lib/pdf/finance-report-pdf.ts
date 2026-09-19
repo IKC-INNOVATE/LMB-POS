@@ -82,9 +82,15 @@ export function downloadFinanceReportPdf(overview: FinancialOverview, periodFilt
   row('Panier moyen', fmt(overview.averageBasket));
   row('Dépenses de caisse', fmt(overview.totalCashExpenses));
   row('Charges d’exploitation', fmt(overview.totalOperatingCharges));
+  row('Masse salariale', fmt(overview.totalPayroll));
   row(
     'Bénéfice théorique',
-    fmt(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges)),
+    fmt(
+      Math.max(
+        0,
+        overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges - overview.totalPayroll,
+      ),
+    ),
     true,
   );
   y += 4;
@@ -112,9 +118,15 @@ export function downloadFinanceReportPdf(overview: FinancialOverview, periodFilt
   row('Taux de marge', `${overview.grossMarginRate.toFixed(1)} %`);
   row('Dépenses de caisse', fmt(overview.totalCashExpenses));
   row('Charges d’exploitation', fmt(overview.totalOperatingCharges));
+  row('Masse salariale', fmt(overview.totalPayroll));
   row(
     'Bénéfice théorique',
-    fmt(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges)),
+    fmt(
+      Math.max(
+        0,
+        overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges - overview.totalPayroll,
+      ),
+    ),
     true,
   );
   y += 4;
