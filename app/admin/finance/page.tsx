@@ -110,17 +110,22 @@ export default function FinancePage() {
         cash: 0,
         mobileMoney: 0,
         totalExpenses: 0,
+        operatingCharges: 0,
         theoreticalProfit: 0,
       };
     }
 
-    const theoreticalProfit = Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses);
+    const theoreticalProfit = Math.max(
+      0,
+      overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges,
+    );
 
     return {
       totalRevenue: overview.totalRevenue,
       cash: overview.paymentBreakdown.cash,
       mobileMoney: overview.paymentBreakdown.mobile_money,
       totalExpenses: overview.totalCashExpenses,
+      operatingCharges: overview.totalOperatingCharges,
       theoreticalProfit,
     };
   }, [overview]);
@@ -139,9 +144,13 @@ export default function FinancePage() {
       ['Paiements mixtes', String(overview.paymentBreakdown.mixed)],
       ['Acomptes', String(overview.paymentBreakdown.deposit)],
       ['Dépenses de caisse', String(overview.totalCashExpenses)],
+      ['Charges d’exploitation', String(overview.totalOperatingCharges)],
       [overview.grossMarginIsEstimated ? 'Marge brute (partiellement estimée)' : 'Marge brute réelle', String(overview.grossMarginEstimate)],
       ['Part du CA à marge estimée (%)', overview.estimatedRevenueShare.toFixed(1)],
-      ['Bénéfice théorique', String(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses))],
+      [
+        'Bénéfice théorique',
+        String(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges)),
+      ],
     ];
 
     const csvContent = rows.map((row) => row.join(',')).join('\n');
@@ -328,9 +337,12 @@ export default function FinancePage() {
                     estimated={overview.grossMarginIsEstimated}
                   />
                   <SummaryRow label="Dépenses de caisse" value={formatMoney(overview.totalCashExpenses)} />
+                  <SummaryRow label="Charges d’exploitation" value={formatMoney(overview.totalOperatingCharges)} />
                   <SummaryRow
                     label="Bénéfice théorique"
-                    value={formatMoney(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses))}
+                    value={formatMoney(
+                      Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges),
+                    )}
                     estimated={overview.grossMarginIsEstimated}
                   />
                 </div>

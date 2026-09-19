@@ -81,7 +81,12 @@ export function downloadFinanceReportPdf(overview: FinancialOverview, periodFilt
   row('Nombre de ventes', String(overview.salesCount));
   row('Panier moyen', fmt(overview.averageBasket));
   row('Dépenses de caisse', fmt(overview.totalCashExpenses));
-  row('Bénéfice théorique', fmt(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses)), true);
+  row('Charges d’exploitation', fmt(overview.totalOperatingCharges));
+  row(
+    'Bénéfice théorique',
+    fmt(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges)),
+    true,
+  );
   y += 4;
 
   doc.setFont('helvetica', 'bold');
@@ -106,7 +111,12 @@ export function downloadFinanceReportPdf(overview: FinancialOverview, periodFilt
   row(overview.grossMarginIsEstimated ? 'Marge brute (partiellement estimée)' : 'Marge brute réelle', fmt(overview.grossMarginEstimate));
   row('Taux de marge', `${overview.grossMarginRate.toFixed(1)} %`);
   row('Dépenses de caisse', fmt(overview.totalCashExpenses));
-  row('Bénéfice théorique', fmt(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses)), true);
+  row('Charges d’exploitation', fmt(overview.totalOperatingCharges));
+  row(
+    'Bénéfice théorique',
+    fmt(Math.max(0, overview.grossMarginEstimate - overview.totalCashExpenses - overview.totalOperatingCharges)),
+    true,
+  );
   y += 4;
 
   if (overview.grossMarginIsEstimated) {

@@ -8,6 +8,7 @@ import {
   type RawRecord,
 } from '@/lib/services/cost';
 import { normalizeStore, type StoreKey } from '@/lib/services/store-comparison';
+import { getTotalCharges } from '@/lib/services/charges';
 
 export type FinancialPeriodFilter = 'TODAY' | 'LAST_7_DAYS' | 'THIS_MONTH';
 
@@ -27,6 +28,13 @@ export interface FinancialOverview {
   averageBasket: number;
   paymentBreakdown: FinancialPaymentBreakdown;
   totalCashExpenses: number;
+  /**
+   * Charges d'exploitation (loyer, électricité, eau...) enregistrées dans
+   * l'écran Charges (voir lib/services/charges.ts), manuelles ou générées
+   * automatiquement depuis un modèle récurrent — Phase 4 du chantier Charges.
+   * Distinct de `totalCashExpenses` (sorties de caisse en espèces).
+   */
+  totalOperatingCharges: number;
   grossMarginEstimate: number;
   grossMarginRate: number;
   /**
@@ -138,6 +146,19 @@ export async function getFinancialOverview(
   // Clé (id OU sku, en minuscules) -> coût d'achat réel > 0.
   const costByKey = buildCostByKey(productsResult.data as RawRecord[] | null);
 
+  // Charges d'exploitation (Phase 4) : non bloquant, comme le coût produit
+  // ci-dessus — une erreur ici (table absente, RLS...) ne doit pas casser le
+  // reste du rapport financier, seulement laisser cette ligne à 0.
+  let totalOperatingCharges = 0;
+  try {
+    totalOperatingCharges = await getTotalCharges(safeStart.slice(0, 10), safeEnd.slice(0, 10), storeFilter ?? null);
+  } catch (err) {
+    console.warn(
+      "getFinancialOverview: lecture des charges d'exploitation impossible, ligne ignorée dans le rapport",
+      err,
+    );
+  }
+
   const paymentBreakdown: FinancialPaymentBreakdown = {
     cash: 0,
     mobile_money: 0,
@@ -200,6 +221,7 @@ export async function getFinancialOverview(
     averageBasket,
     paymentBreakdown,
     totalCashExpenses,
+    totalOperatingCharges,
     grossMarginEstimate,
     grossMarginRate,
     grossMarginIsEstimated,
