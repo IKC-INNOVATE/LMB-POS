@@ -783,6 +783,57 @@ html.light .lmb-finance .hover\:border-\[\#D4AF37\]:hover { border-color: var(--
 html.light .lmb-finance .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
 html.light .lmb-finance .border-gray-700 { border-color: var(--lmb-border); }
 
+/* ===== Charges d'exploitation — nouvelle identité visuelle (thème clair) =====
+   Même technique que les autres écrans : un seul ajout de classe
+   (.lmb-charges) sur le conteneur racine de app/admin/charges/page.tsx,
+   aucune autre modification de logique. Le thème sombre reste strictement
+   inchangé. Ajouté suite à votre remarque du 19/09 (« adapter les couleurs
+   aux nouveaux boutons ajoutés ») — le nouvel écran manquait sa classe de
+   thème, donc gardait par défaut les teintes du mode sombre. */
+
+/* Fond de page + cartes */
+html.light .lmb-charges .bg-\[\#0A0F1D\] { background-color: var(--lmb-bg); }
+html.light .lmb-charges .bg-slate-900\/90,
+html.light .lmb-charges .bg-slate-900\/80,
+html.light .lmb-charges .bg-slate-950 { background-color: var(--lmb-card); }
+html.light .lmb-charges .bg-slate-950\/50 { background-color: var(--lmb-bg); }
+
+/* Bordures */
+html.light .lmb-charges .border-slate-800,
+html.light .lmb-charges .border-slate-700,
+html.light .lmb-charges .border-slate-600,
+html.light .lmb-charges .border-gray-700 { border-color: var(--lmb-border); }
+html.light .lmb-charges .divide-slate-800\/70 { border-color: var(--lmb-border); }
+
+/* Textes neutres */
+html.light .lmb-charges .text-slate-100,
+html.light .lmb-charges .text-slate-200 { color: var(--lmb-ink); }
+html.light .lmb-charges .text-slate-300 { color: var(--lmb-ink-soft); }
+html.light .lmb-charges .text-slate-400 { color: var(--lmb-ink-faint); }
+html.light .lmb-charges .text-slate-600 { color: var(--lmb-ink-soft); }
+
+/* Cyan -> couleur d'accent (libellé "ERP • Charges", icône du bloc liste) */
+html.light .lmb-charges .text-cyan-300 { color: var(--lmb-accent-600); }
+
+/* Ambre -> ambre aligné sur la maquette (Total du mois) */
+html.light .lmb-charges .border-amber-500\/30 { border-color: var(--lmb-amber-600); }
+html.light .lmb-charges .bg-amber-500\/10 { background-color: color-mix(in oklab, var(--lmb-amber-600) 10%, transparent); }
+html.light .lmb-charges .text-amber-300 { color: var(--lmb-amber-600); }
+
+/* Rose -> rouge (erreurs de chargement, suppression d'une charge) */
+html.light .lmb-charges .border-rose-500\/40 { border-color: var(--lmb-red-600); }
+html.light .lmb-charges .bg-rose-500\/10 { background-color: color-mix(in oklab, var(--lmb-red-600) 10%, transparent); }
+html.light .lmb-charges .bg-rose-500 { background-color: var(--lmb-red-600); }
+html.light .lmb-charges .text-rose-200,
+html.light .lmb-charges .text-rose-300 { color: var(--lmb-red-600); }
+html.light .lmb-charges .hover\:text-rose-400:hover { color: var(--lmb-red-600); }
+
+/* Or -> couleur d'accent (boutons PrimaryButton/SecondaryButton partagés) */
+html.light .lmb-charges .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-charges .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
+html.light .lmb-charges .hover\:border-\[\#D4AF37\]:hover { border-color: var(--lmb-accent-500); }
+html.light .lmb-charges .focus\:border-\[\#D4AF37\]:focus { border-color: var(--lmb-accent-500); }
+
 /* ===== Phase G : Achats & Fournisseurs — nouvelle identité visuelle
    (thème clair) =====
    Même technique que les phases precedentes : un seul ajout de classe
@@ -1381,7 +1432,8 @@ html.light .lmb-audits,
 html.light .lmb-transfers,
 html.light .lmb-inventory,
 html.light .lmb-providers,
-html.light .lmb-surveillance {
+html.light .lmb-surveillance,
+html.light .lmb-charges {
   font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
 }
 html.light .lmb-pricing h1, html.light .lmb-pricing h2, html.light .lmb-pricing h3,
@@ -1394,7 +1446,8 @@ html.light .lmb-audits h1, html.light .lmb-audits h2, html.light .lmb-audits h3,
 html.light .lmb-transfers h1, html.light .lmb-transfers h2, html.light .lmb-transfers h3,
 html.light .lmb-inventory h1, html.light .lmb-inventory h2, html.light .lmb-inventory h3,
 html.light .lmb-providers h1, html.light .lmb-providers h2, html.light .lmb-providers h3,
-html.light .lmb-surveillance h1, html.light .lmb-surveillance h2, html.light .lmb-surveillance h3 {
+html.light .lmb-surveillance h1, html.light .lmb-surveillance h2, html.light .lmb-surveillance h3,
+html.light .lmb-charges h1, html.light .lmb-charges h2, html.light .lmb-charges h3 {
   font-family: 'Sora', Arial, Helvetica, sans-serif;
   letter-spacing: -0.01em;
 }
