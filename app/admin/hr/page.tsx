@@ -732,6 +732,7 @@ function SummarySection() {
 
 const emptyEmployeeForm: CreatePayrollEmployeeInput = {
   full_name: '',
+  store_code: null,
   contract_type: 'CDI',
   contract_start_date: toDateInput(new Date()),
   base_salary_xof: 0,
@@ -825,6 +826,7 @@ function PayrollSection() {
     setEditing(emp);
     setForm({
       staff_id: emp.staff_id,
+      store_code: emp.store_code,
       full_name: emp.full_name,
       contract_type: emp.contract_type,
       contract_start_date: emp.contract_start_date,
@@ -950,6 +952,9 @@ function PayrollSection() {
                         {!emp.is_active && (
                           <span className="ml-2 rounded-full bg-slate-700 px-2 py-0.5 text-[9px] text-slate-300">INACTIF</span>
                         )}
+                        <div className="mt-0.5 text-[10px] font-normal text-slate-500">
+                          {emp.store_code === 'DAKAR' ? 'Dakar' : emp.store_code === 'ABIDJAN' ? 'Abidjan' : 'Direction / réseau'}
+                        </div>
                       </td>
                       <td className="py-2.5 px-3 text-slate-300">{emp.contract_type}</td>
                       <td className="py-2.5 px-3 text-right font-mono text-emerald-300">{brut.toLocaleString('fr-FR')}</td>
@@ -1049,6 +1054,17 @@ function PayrollSection() {
               <label className="text-xs md:col-span-2">
                 <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Nom complet</span>
                 <Input value={form.full_name} onChange={(e) => set('full_name', e.target.value)} />
+              </label>
+              <label className="text-xs">
+                <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Boutique</span>
+                <Select
+                  value={form.store_code ?? ''}
+                  onChange={(e) => set('store_code', (e.target.value || null) as 'DAKAR' | 'ABIDJAN' | null)}
+                >
+                  <option value="">— Direction / aucune boutique précise</option>
+                  <option value="DAKAR">Dakar</option>
+                  <option value="ABIDJAN">Abidjan</option>
+                </Select>
               </label>
               <label className="text-xs">
                 <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Type de contrat</span>

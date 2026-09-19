@@ -43,6 +43,14 @@ export interface OtherPrime {
 export interface PayrollEmployee {
   id: string;
   staff_id: string | null;
+  /**
+   * Boutique de rattachement du salarié (Phase 5 du chantier Charges
+   * d'exploitation) — indépendant du compte de connexion (lmb_staff),
+   * car tous les salariés n'en ont pas forcément un. NULL = Direction /
+   * aucune boutique précise. Utilisé par la masse salariale automatique
+   * du rapport financier (Phase 6).
+   */
+  store_code: 'DAKAR' | 'ABIDJAN' | null;
   full_name: string;
   contract_type: 'CDD' | 'CDI';
   contract_start_date: string;
@@ -57,6 +65,7 @@ export interface PayrollEmployee {
 
 export interface CreatePayrollEmployeeInput {
   staff_id?: string | null;
+  store_code?: 'DAKAR' | 'ABIDJAN' | null;
   full_name: string;
   contract_type: 'CDD' | 'CDI';
   contract_start_date: string;
@@ -171,6 +180,7 @@ export async function createPayrollEmployee(input: CreatePayrollEmployeeInput): 
     .insert([
       {
         staff_id: input.staff_id ?? null,
+        store_code: input.store_code ?? null,
         full_name: input.full_name,
         contract_type: input.contract_type,
         contract_start_date: input.contract_start_date,
