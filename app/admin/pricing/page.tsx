@@ -606,7 +606,7 @@ function PromotionsSection() {
               className="rounded-xl"
             />
           </div>
-          <div>
+          <div className="xl:col-span-3">
             <label className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-slate-400">Début</label>
             <Input
               type="datetime-local"
@@ -615,7 +615,7 @@ function PromotionsSection() {
               className="rounded-xl"
             />
           </div>
-          <div>
+          <div className="xl:col-span-3">
             <label className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-slate-400">
               Fin (optionnel)
             </label>

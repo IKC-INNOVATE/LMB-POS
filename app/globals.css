@@ -446,6 +446,9 @@ html.light .lmb-dashboard .focus\:border-\[\#D4AF37\]:focus { border-color: var(
 html.light .lmb-dashboard .text-\[\#D4AF37\] { color: var(--lmb-accent-600); }
 html.light .lmb-dashboard .shadow-\[\#D4AF37\]\/20,
 html.light .lmb-dashboard .shadow-\[\#D4AF37\]\/25 { --tw-shadow-color: color-mix(in oklab, var(--lmb-accent-500) 20%, transparent); }
+/* Fond des boutons PrimaryButton ("+ Ajouter au Colis", "+ Nouveau Soin", etc.) — oubli repéré le 18/09 */
+html.light .lmb-dashboard .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }
+html.light .lmb-dashboard .hover\:bg-\[\#C5A059\]:hover { background-color: var(--lmb-accent-600); }
 /* Logo (icône) : dégradé clair -> moyen -> pâle */
 html.light .lmb-dashboard .from-\[\#D4AF37\] { --tw-gradient-from: var(--lmb-accent-300); }
 html.light .lmb-dashboard .via-\[\#C5A059\] { --tw-gradient-via: var(--lmb-accent-500); }

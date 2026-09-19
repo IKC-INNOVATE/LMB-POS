@@ -1580,7 +1580,7 @@ export default function AdminDashboardPage() {
                     onChange={(e) => setSearchStock(e.target.value)}
                     className="w-48 text-xs"
                   />
-                  <PrimaryButton onClick={handleOpenNewProductModal} className="px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5">
+                  <PrimaryButton onClick={handleOpenNewProductModal} className="px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                     <Plus className="w-3.5 h-3.5" />
                     <span>+ Nouveau Soin</span>
                   </PrimaryButton>
