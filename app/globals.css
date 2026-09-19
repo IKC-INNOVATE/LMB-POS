@@ -804,6 +804,7 @@ html.light .lmb-charges .border-slate-700,
 html.light .lmb-charges .border-slate-600,
 html.light .lmb-charges .border-gray-700 { border-color: var(--lmb-border); }
 html.light .lmb-charges .divide-slate-800\/70 { border-color: var(--lmb-border); }
+html.light .lmb-charges .hover\:border-slate-400:hover { border-color: var(--lmb-ink-faint); }
 
 /* Textes neutres */
 html.light .lmb-charges .text-slate-100,
@@ -827,6 +828,11 @@ html.light .lmb-charges .bg-rose-500 { background-color: var(--lmb-red-600); }
 html.light .lmb-charges .text-rose-200,
 html.light .lmb-charges .text-rose-300 { color: var(--lmb-red-600); }
 html.light .lmb-charges .hover\:text-rose-400:hover { color: var(--lmb-red-600); }
+
+/* Émeraude -> vert sauge (badge "Actif" d'un modèle récurrent) */
+html.light .lmb-charges .border-emerald-500\/30 { border-color: var(--lmb-sage-500); }
+html.light .lmb-charges .bg-emerald-500\/10 { background-color: color-mix(in oklab, var(--lmb-sage-500) 10%, transparent); }
+html.light .lmb-charges .text-emerald-300 { color: var(--lmb-sage-700); }
 
 /* Or -> couleur d'accent (boutons PrimaryButton/SecondaryButton partagés) */
 html.light .lmb-charges .bg-\[\#D4AF37\] { background-color: var(--lmb-accent-500); }

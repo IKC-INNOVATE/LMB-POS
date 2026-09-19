@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Plus, Receipt, Trash2, Wallet } from 'lucide-react';
+import { ArrowLeft, Plus, Receipt, Repeat, Trash2, Wallet } from 'lucide-react';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
 import Input from '@/components/ui/Input';
@@ -13,26 +13,34 @@ import {
   listCharges,
   createCharge,
   deleteCharge,
+  listChargeTemplates,
+  createChargeTemplate,
+  updateChargeTemplate,
+  deleteChargeTemplate,
+  ensureRecurringChargesGeneratedForMonth,
   CHARGE_CATEGORY_LABELS,
   CHARGE_PAYMENT_METHOD_LABELS,
   type Charge,
+  type ChargeTemplate,
   type ChargeCategory,
   type ChargeStore,
   type ChargePaymentMethod,
 } from '@/lib/services/charges';
 
-// Phase 2 du chantier "Charges d'exploitation" (voir la feuille de route
-// claude/roadmap-module-charges-exploitation-2026-09-19.md, projet LMB) :
-// premier écran visible, saisie manuelle uniquement (charges ponctuelles).
-// Les charges récurrentes (loyer généré automatiquement chaque mois)
-// arrivent en Phase 3, dans une évolution séparée de cet écran.
+// Chantier "Charges d'exploitation" (voir la feuille de route
+// claude/roadmap-module-charges-exploitation-2026-09-19.md, projet LMB).
+// Phase 2 : saisie manuelle (charges ponctuelles). Phase 3 : charges
+// récurrentes (modèles + génération automatique "paresseuse" — dès
+// l'ouverture de cet écran pour un mois donné, voir
+// ensureRecurringChargesGeneratedForMonth dans lib/services/charges.ts).
 //
 // Accès : DIRECTION voit et gère les deux boutiques ; GERANT ne voit et ne
 // saisit que celles de sa propre boutique (verrouillée, non modifiable dans
-// le formulaire) — même principe que la Caisse et le Registre RH. Un
+// les formulaires) — même principe que la Caisse et le Registre RH. Un
 // CAISSIER n'atteint jamais cette page (liste blanche vide dans
 // lib/services/auth.ts, CAISSIER_ALLOWED_ADMIN_PATHS). La RLS de
-// lmb_charges applique la même règle côté base, indépendamment de l'UI.
+// lmb_charges / lmb_charge_templates applique la même règle côté base,
+// indépendamment de l'UI.
 
 type StoreFilter = ChargeStore | 'ALL';
 
@@ -75,6 +83,15 @@ const emptyForm = (defaultStore: ChargeStore | '') => ({
   note: '',
 });
 
+const emptyTemplateForm = (defaultStore: ChargeStore | '') => ({
+  store_code: defaultStore,
+  category: 'LOYER' as ChargeCategory,
+  amount_xof: '',
+  day_of_month: '5',
+  payment_method: '' as ChargePaymentMethod | '',
+  note: '',
+});
+
 export default function ChargesPage() {
   const [currentStaff, setCurrentStaff] = useState<CurrentStaff | null>(null);
   const [staffLoading, setStaffLoading] = useState(true);
@@ -97,6 +114,18 @@ export default function ChargesPage() {
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const [generating, setGenerating] = useState(false);
+  const [generatedCount, setGeneratedCount] = useState(0);
+
+  const [templates, setTemplates] = useState<ChargeTemplate[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [templateForm, setTemplateForm] = useState(emptyTemplateForm(''));
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateFormError, setTemplateFormError] = useState<string | null>(null);
+  const [templateActionId, setTemplateActionId] = useState<string | null>(null);
+  const [deleteTemplateConfirmId, setDeleteTemplateConfirmId] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
       setStaffLoading(true);
@@ -108,6 +137,7 @@ export default function ChargesPage() {
         if (staff && staff.staff.role !== 'DIRECTION' && staff.staff.store_code) {
           setStoreFilter(staff.staff.store_code as ChargeStore);
           setForm((f) => ({ ...f, store_code: staff.staff.store_code as ChargeStore }));
+          setTemplateForm((f) => ({ ...f, store_code: staff.staff.store_code as ChargeStore }));
         }
       } catch (err) {
         console.error('getCurrentStaff (charges)', err);
@@ -120,12 +150,34 @@ export default function ChargesPage() {
   const loadCharges = async () => {
     setLoading(true);
     setError(null);
+    setGeneratedCount(0);
     try {
+      const effectiveStore = storeFilter === 'ALL' ? null : storeFilter;
+
+      // Génération "paresseuse" des charges récurrentes (Phase 3) : à chaque
+      // ouverture de ce mois, on vérifie d'abord si les modèles actifs ont
+      // déjà leur charge du mois, et on la crée sinon — avant de recharger
+      // la liste, pour qu'elle apparaisse immédiatement.
+      if (currentStaff) {
+        setGenerating(true);
+        try {
+          const created = await ensureRecurringChargesGeneratedForMonth(month, effectiveStore, {
+            name: currentStaff.staff.full_name,
+            role: currentStaff.staff.role,
+          });
+          setGeneratedCount(created);
+        } catch (err) {
+          console.error('ensureRecurringChargesGeneratedForMonth', err);
+        } finally {
+          setGenerating(false);
+        }
+      }
+
       const { startDate, endDate } = monthRange(month);
       const result = await listCharges({
         startDate,
         endDate,
-        storeCode: storeFilter === 'ALL' ? null : storeFilter,
+        storeCode: effectiveStore,
         category: categoryFilter === 'ALL' ? null : categoryFilter,
       });
       setCharges(result);
@@ -137,11 +189,29 @@ export default function ChargesPage() {
     }
   };
 
+  const loadTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const result = await listChargeTemplates(storeFilter === 'ALL' ? null : storeFilter);
+      setTemplates(result);
+    } catch (err) {
+      console.error('listChargeTemplates', err);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (staffLoading) return;
     loadCharges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staffLoading, month, storeFilter, categoryFilter]);
+
+  useEffect(() => {
+    if (staffLoading) return;
+    loadTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staffLoading, storeFilter]);
 
   const total = useMemo(() => charges.reduce((sum, c) => sum + Number(c.amount_xof ?? 0), 0), [charges]);
 
@@ -205,6 +275,86 @@ export default function ChargesPage() {
       // La suppression a échoué côté base : on recharge pour resynchroniser
       // la liste au lieu de laisser une ligne fantôme retirée à tort.
       loadCharges();
+      alert(err instanceof Error ? err.message : 'Suppression impossible.');
+    }
+  };
+
+  const openTemplateForm = () => {
+    setTemplateFormError(null);
+    setTemplateForm(emptyTemplateForm(isDirection ? '' : (ownStore ?? '')));
+    setShowTemplateForm(true);
+  };
+
+  const submitTemplate = async () => {
+    setTemplateFormError(null);
+
+    const storeCode = isDirection ? templateForm.store_code : ownStore;
+    if (!storeCode) {
+      setTemplateFormError('Choisissez une boutique.');
+      return;
+    }
+    const amount = Number(templateForm.amount_xof);
+    if (!amount || amount <= 0) {
+      setTemplateFormError('Indiquez un montant valide, supérieur à 0.');
+      return;
+    }
+    const day = Number(templateForm.day_of_month);
+    if (!day || day < 1 || day > 28) {
+      setTemplateFormError('Choisissez un jour entre 1 et 28 (pour rester valable sur tous les mois).');
+      return;
+    }
+    if (!currentStaff) {
+      setTemplateFormError('Session expirée. Reconnectez-vous et réessayez.');
+      return;
+    }
+
+    setTemplateSaving(true);
+    try {
+      await createChargeTemplate({
+        store_code: storeCode as ChargeStore,
+        category: templateForm.category,
+        amount_xof: amount,
+        day_of_month: day,
+        payment_method: templateForm.payment_method || null,
+        note: templateForm.note || null,
+        created_by_name: currentStaff.staff.full_name,
+        created_by_role: currentStaff.staff.role,
+      });
+      setShowTemplateForm(false);
+      await loadTemplates();
+      // Le nouveau modèle peut immédiatement générer la charge du mois en
+      // cours (si elle n'existe pas déjà) : on relance le chargement du
+      // mois affiché pour qu'elle apparaisse sans avoir à recharger la page.
+      await loadCharges();
+    } catch (err) {
+      console.error('createChargeTemplate', err);
+      setTemplateFormError(err instanceof Error ? err.message : 'Enregistrement impossible.');
+    } finally {
+      setTemplateSaving(false);
+    }
+  };
+
+  const toggleTemplateActive = async (template: ChargeTemplate) => {
+    setTemplateActionId(template.id);
+    try {
+      await updateChargeTemplate(template.id, { is_active: !template.is_active });
+      await loadTemplates();
+    } catch (err) {
+      console.error('updateChargeTemplate', err);
+      alert(err instanceof Error ? err.message : 'Modification impossible.');
+    } finally {
+      setTemplateActionId(null);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    setDeleteTemplateConfirmId(null);
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await deleteChargeTemplate(id);
+    } catch (err) {
+      console.error('deleteChargeTemplate', err);
+      loadTemplates();
       alert(err instanceof Error ? err.message : 'Suppression impossible.');
     }
   };
@@ -287,6 +437,17 @@ export default function ChargesPage() {
 
         {error ? (
           <div className="mb-6 rounded-3xl border border-rose-500/40 bg-rose-500/10 p-5 text-sm text-rose-200">{error}</div>
+        ) : null}
+
+        {!generating && generatedCount > 0 ? (
+          <div className="mb-6 flex items-center gap-2 rounded-3xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300">
+            <Repeat className="h-4 w-4 shrink-0" />
+            <span>
+              {generatedCount === 1
+                ? '1 charge récurrente a été générée automatiquement pour ce mois (voir « Enregistrée par » dans le tableau).'
+                : `${generatedCount} charges récurrentes ont été générées automatiquement pour ce mois (voir « Enregistrée par » dans le tableau).`}
+            </span>
+          </div>
         ) : null}
 
         {showForm ? (
@@ -452,6 +613,204 @@ export default function ChargesPage() {
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Repeat className="h-4 w-4 text-cyan-300" />
+              <div>
+                <h3 className="text-lg font-bold text-white">Charges récurrentes</h3>
+                <p className="text-xs text-slate-400">
+                  Un modèle (ex. loyer) génère automatiquement sa charge chaque mois, sans ressaisie.
+                </p>
+              </div>
+            </div>
+            <SecondaryButton onClick={openTemplateForm} className="inline-flex shrink-0 items-center gap-2 text-xs">
+              <Plus className="h-3.5 w-3.5" />
+              Nouveau modèle récurrent
+            </SecondaryButton>
+          </div>
+
+          {showTemplateForm ? (
+            <div className="mb-5 rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <label className="text-xs">
+                  <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Boutique</span>
+                  {isDirection ? (
+                    <Select
+                      value={templateForm.store_code}
+                      onChange={(e) => setTemplateForm((f) => ({ ...f, store_code: e.target.value as ChargeStore }))}
+                    >
+                      <option value="">Choisir…</option>
+                      <option value="DAKAR">Dakar</option>
+                      <option value="ABIDJAN">Abidjan</option>
+                    </Select>
+                  ) : (
+                    <p className="rounded-lg border border-gray-700 bg-[#111111] px-3 py-2 text-sm text-slate-200">
+                      {ownStore ? STORE_LABELS[ownStore] : '—'}
+                    </p>
+                  )}
+                </label>
+
+                <label className="text-xs">
+                  <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Catégorie</span>
+                  <Select
+                    value={templateForm.category}
+                    onChange={(e) => setTemplateForm((f) => ({ ...f, category: e.target.value as ChargeCategory }))}
+                  >
+                    {CATEGORY_OPTIONS.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+
+                <label className="text-xs">
+                  <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Montant (FCFA)</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={templateForm.amount_xof}
+                    onChange={(e) => setTemplateForm((f) => ({ ...f, amount_xof: e.target.value }))}
+                    placeholder="Ex. 150000"
+                  />
+                </label>
+
+                <label className="text-xs">
+                  <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Jour du mois (1 à 28)</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={28}
+                    value={templateForm.day_of_month}
+                    onChange={(e) => setTemplateForm((f) => ({ ...f, day_of_month: e.target.value }))}
+                    placeholder="Ex. 5"
+                  />
+                </label>
+
+                <label className="text-xs">
+                  <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Mode de paiement (optionnel)</span>
+                  <Select
+                    value={templateForm.payment_method}
+                    onChange={(e) => setTemplateForm((f) => ({ ...f, payment_method: e.target.value as ChargePaymentMethod | '' }))}
+                  >
+                    <option value="">Non précisé</option>
+                    {PAYMENT_METHOD_OPTIONS.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+
+                <label className="text-xs md:col-span-2 xl:col-span-1">
+                  <span className="mb-1 block uppercase tracking-[0.14em] text-slate-400">Note (optionnel)</span>
+                  <Textarea
+                    rows={1}
+                    value={templateForm.note}
+                    onChange={(e) => setTemplateForm((f) => ({ ...f, note: e.target.value }))}
+                    placeholder="Ex. bail n°…"
+                  />
+                </label>
+              </div>
+
+              {templateFormError ? <p className="mt-3 text-sm text-rose-300">{templateFormError}</p> : null}
+
+              <div className="mt-4 flex items-center gap-3">
+                <PrimaryButton onClick={submitTemplate} disabled={templateSaving} className="text-xs">
+                  {templateSaving ? 'Enregistrement…' : 'Créer le modèle récurrent'}
+                </PrimaryButton>
+                <SecondaryButton onClick={() => setShowTemplateForm(false)} disabled={templateSaving} className="text-xs">
+                  Annuler
+                </SecondaryButton>
+              </div>
+            </div>
+          ) : null}
+
+          {templatesLoading ? (
+            <LoadingState label="Chargement des modèles récurrents…" />
+          ) : templates.length === 0 ? (
+            <p className="py-6 text-center text-sm text-slate-400">Aucune charge récurrente définie pour l&apos;instant.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800 text-[10px] uppercase tracking-[0.14em] text-slate-400">
+                    {storeFilter === 'ALL' ? <th className="py-2.5 px-3">Boutique</th> : null}
+                    <th className="py-2.5 px-3">Catégorie</th>
+                    <th className="py-2.5 px-3">Montant</th>
+                    <th className="py-2.5 px-3">Jour du mois</th>
+                    <th className="py-2.5 px-3">Statut</th>
+                    <th className="py-2.5 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/70">
+                  {templates.map((template) => (
+                    <tr key={template.id} className="text-slate-200">
+                      {storeFilter === 'ALL' ? (
+                        <td className="py-2.5 px-3">{STORE_LABELS[template.store_code]}</td>
+                      ) : null}
+                      <td className="py-2.5 px-3">{CHARGE_CATEGORY_LABELS[template.category]}</td>
+                      <td className="py-2.5 px-3 font-bold text-white">{formatMoney(template.amount_xof)}</td>
+                      <td className="py-2.5 px-3">Le {template.day_of_month}</td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={
+                            template.is_active
+                              ? 'rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300'
+                              : 'rounded-full border border-slate-700 bg-slate-950/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400'
+                          }
+                        >
+                          {template.is_active ? 'Actif' : 'En pause'}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        {deleteTemplateConfirmId === template.id ? (
+                          <span className="inline-flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                              className="rounded-lg bg-rose-500 px-2 py-1 text-[10px] font-bold text-white"
+                            >
+                              Confirmer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTemplateConfirmId(null)}
+                              className="rounded-lg border border-slate-600 px-2 py-1 text-[10px] font-bold text-slate-300"
+                            >
+                              Annuler
+                            </button>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => toggleTemplateActive(template)}
+                              disabled={templateActionId === template.id}
+                              className="rounded-lg border border-slate-600 px-2 py-1 text-[10px] font-bold text-slate-300 hover:border-slate-400"
+                            >
+                              {templateActionId === template.id ? '…' : template.is_active ? 'Mettre en pause' : 'Réactiver'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTemplateConfirmId(template.id)}
+                              className="p-1 text-slate-600 hover:text-rose-400 transition"
+                              aria-label="Supprimer ce modèle récurrent"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </span>
                         )}
                       </td>
                     </tr>
