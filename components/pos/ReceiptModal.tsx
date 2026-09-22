@@ -2,7 +2,7 @@
 
 import { jsPDF } from 'jspdf';
 
-// jsPDF (police helvetica standard) ne sait pas afficher l'espace fine
+// jsPDF (polices standard integrees, dont "times") ne sait pas afficher l'espace fine
 // insecable (U+202F) que toLocaleString('fr-FR') utilise comme separateur de
 // milliers : ce caractere est alors rendu comme un "/" illisible dans le PDF.
 // On le remplace par un espace normal, uniquement pour le texte injecte dans
@@ -111,11 +111,11 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
     const lineHeight = 4;
 
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('LUXURY MAGIC BUTTER', margin, 10);
+    doc.setFont('times', 'bold');
+    doc.text('LUXURY MAGIC BUTTER SKIN', margin, 10);
 
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('times', 'normal');
     doc.text(receipt.storeName, margin, 16);
     doc.text(new Date(receipt.createdAt).toLocaleString('fr-FR'), margin, 20);
     doc.text(`Conseillère: ${receipt.cashierName}`, margin, 24);
@@ -131,7 +131,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
       doc.text(`${item.name} x${item.quantity}`, margin, y);
       doc.text(`${fmtPdf(item.total_price_xof)} FCFA`, 52, y, { align: 'right' });
       y += lineHeight;
-      doc.text(`${fmtPdf(item.unit_price_xof)} FCFA/uni`, margin, y);
+      doc.text(`${fmtPdf(item.unit_price_xof)} FCFA/unité`, margin, y);
       y += lineHeight;
     });
 
@@ -145,10 +145,10 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
     y += lineHeight;
     doc.text(`Solde: ${pointsBalance}`, margin, y);
     y += lineHeight + 2;
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('times', 'bold');
     doc.text(`Total: ${fmtPdf(receipt.totalXof)} FCFA`, margin, y);
     y += lineHeight;
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('times', 'normal');
     doc.text(`Paiement: ${paymentLabel[receipt.paymentMethod] ?? receipt.paymentMethod}`, margin, y);
 
     // Show paymentDetails for split or partial payments
@@ -173,16 +173,24 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
 
     y += 10;
     doc.text('Merci pour votre achat !', margin, y);
-    doc.text('Retours sous 7 jours selon conditions.', margin, y + 4);
-    doc.text(`N° Ticket: ${receipt.receiptNumber}`, margin, y + 8);
+    doc.text(`N° Ticket: ${receipt.receiptNumber}`, margin, y + 4);
 
     doc.save(`${receipt.receiptNumber}.pdf`);
+  };
+
+  // Impression directe sur imprimante thermique 80mm (ou toute autre
+  // imprimante connectée) via la boîte de dialogue d'impression native du
+  // navigateur. S'appuie sur le bloc [data-receipt-print] déjà préparé plus
+  // bas (masque tout le reste de la page à l'impression, ne garde que le
+  // ticket au format 80mm) et sur la règle @page ci-dessous.
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleWhatsAppShare = () => {
     const cleanPhone = (receipt.customerPhone ?? customerPhone ?? '').replace(/\D/g, '');
     const text = [
-      `LUXURY MAGIC BUTTER`,
+      `LUXURY MAGIC BUTTER SKIN`,
       `Boutique: ${receipt.storeName}`,
       `N° Vente: ${receipt.receiptNumber}`,
       `Date: ${new Date(receipt.createdAt).toLocaleString('fr-FR')}`,
@@ -198,7 +206,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
       `Points gagnés: ${receipt.pointsEarned ?? 0}`,
       `Nouveau solde: ${pointsBalance}`,
       '',
-      'Merci pour votre achat chez LUXURY MAGIC BUTTER !',
+      'Merci pour votre achat chez LUXURY MAGIC BUTTER SKIN !',
     ].join('\n');
 
     if (!cleanPhone) {
@@ -223,7 +231,7 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
 
           <div className="p-5">
               <div className="mb-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3 text-xs text-cyan-100">
-                <p className="font-bold uppercase tracking-[0.12em]">LUXURY MAGIC BUTTER</p>
+                <p className="font-bold uppercase tracking-[0.12em]">LUXURY MAGIC BUTTER SKIN</p>
               <p>{receipt.storeName}</p>
               <p>{new Date(receipt.createdAt).toLocaleString('fr-FR')}</p>
               <p>Conseillère: {receipt.cashierName}</p>
@@ -313,8 +321,11 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
               <SecondaryButton onClick={handleWhatsAppShare} className="px-3 py-2 text-xs">
                 Partager sur WhatsApp
               </SecondaryButton>
-              <PrimaryButton onClick={handleDownloadPdf} className="px-3 py-2 text-xs">
+              <SecondaryButton onClick={handleDownloadPdf} className="px-3 py-2 text-xs">
                 Télécharger PDF
+              </SecondaryButton>
+              <PrimaryButton onClick={handlePrint} className="col-span-2 px-4 py-2 text-sm">
+                Imprimer le ticket
               </PrimaryButton>
               <SecondaryButton onClick={onClose} className="col-span-2 px-4 py-2 text-sm">
                 Fermer
@@ -325,6 +336,11 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
       </div>
 
       <style jsx>{`
+        @page {
+          size: 80mm auto;
+          margin: 0;
+        }
+
         @media print {
           body {
             background: #fff !important;
@@ -362,13 +378,13 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
           maxWidth: '80mm',
           margin: '0 auto',
           padding: '8px',
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: 'Georgia, "Times New Roman", Times, serif',
           color: '#111827',
           background: '#fff',
         }}
       >
         <div style={{ textAlign: 'center', borderBottom: '1px dashed #cbd5e1', paddingBottom: '6px', marginBottom: '8px' }}>
-          <div style={{ fontWeight: 700, fontSize: '12px' }}>LUXURY MAGIC BUTTER</div>
+          <div style={{ fontWeight: 700, fontSize: '12px', letterSpacing: '0.03em' }}>LUXURY MAGIC BUTTER SKIN</div>
           <div style={{ fontSize: '10px' }}>{receipt.storeName}</div>
           <div style={{ fontSize: '9px' }}>{new Date(receipt.createdAt).toLocaleString('fr-FR')}</div>
           <div style={{ fontSize: '9px' }}>Caisse: {receipt.cashierName}</div>
@@ -438,7 +454,6 @@ export default function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalP
 
         <div style={{ marginTop: '10px', borderTop: '1px dashed #cbd5e1', paddingTop: '8px', textAlign: 'center', fontSize: '9px' }}>
           <div>Merci pour votre achat !</div>
-          <div>Retours sous 7 jours selon conditions.</div>
           <div style={{ marginTop: '6px', fontWeight: 700 }}>N° Ticket: {receipt.receiptNumber}</div>
         </div>
       </div>
